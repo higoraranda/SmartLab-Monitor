@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartLab Monitor</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.8.4/dist/axios.min.js"></script>
+</head>
+<body>
+<div id="app" class="page">
+
+    <header class="hero">
+        <div>
+            <p class="tag">Monólito Full Stack</p>
+            <h1>SmartLab Monitor</h1>
+            <p class="subtitle">
+                Gerenciamento de <strong>prédios</strong>, <strong>laboratórios</strong> e <strong>computadores</strong>
+            </p>
+        </div>
+        <div class="hero-actions">
+            <a href="/swagger-ui.html" target="_blank">Swagger</a>
+            <a href="/h2-console" target="_blank">H2 Console</a>
+        </div>
+    </header>
+
+    <!-- ABAS -->
+    <div class="tabs">
+        <button class="tab-btn" :class="{ active: aba === 'predios' }"       @click="aba = 'predios'">🏢 Prédios</button>
+        <button class="tab-btn" :class="{ active: aba === 'laboratorios' }"  @click="aba = 'laboratorios'">🔬 Laboratórios</button>
+        <button class="tab-btn" :class="{ active: aba === 'computadores' }"  @click="aba = 'computadores'">💻 Computadores</button>
+    </div>
+
+    <main>
+
+        <!-- ======= ABA PRÉDIOS ======= -->
+        <div v-if="aba === 'predios'" class="grid">
+            <section class="card">
+                <h2>{{ predioEdicao ? 'Editar prédio' : 'Novo prédio' }}</h2>
+                <div class="form">
+                    <label>
+                        Nome
+                        <input v-model="predioForm.nome" type="text" placeholder="Ex: Bloco A">
+                    </label>
+                    <div class="buttons">
+                        <button type="button" @click="salvarPredio">{{ predioEdicao ? 'Atualizar' : 'Cadastrar' }}</button>
+                        <button type="button" class="secondary" @click="limparPredio">Limpar</button>
+                    </div>
+                </div>
+                <div v-if="predioErro"    class="alert error">{{ predioErro }}</div>
+                <div v-if="predioSucesso" class="alert success">{{ predioSucesso }}</div>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <h2>Prédios cadastrados</h2>
+                    <button @click="carregarPredios">Atualizar</button>
+                </div>
+                <p v-if="carregandoPredios">Carregando...</p>
+                <table v-else-if="predios.length" class="table">
+                    <thead><tr><th>ID</th><th>Nome</th><th>Labs</th><th>Ações</th></tr></thead>
+                    <tbody>
+                    <tr v-for="p in predios" :key="p.id">
+                        <td>{{ p.id }}</td>
+                        <td>{{ p.nome }}</td>
+                        <td><span class="badge">{{ p.totalLaboratorios }}</span></td>
+                        <td class="actions">
+                            <button class="edit-btn" @click="editarPredio(p)">Editar</button>
+                            <button class="danger"   @click="removerPredio(p.id)">Excluir</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p v-else class="empty">Nenhum prédio cadastrado.</p>
+            </section>
+        </div>
+
+        <!-- ======= ABA LABORATÓRIOS ======= -->
+        <div v-if="aba === 'laboratorios'" class="grid">
+            <section class="card">
+                <h2>{{ labEdicao ? 'Editar laboratório' : 'Novo laboratório' }}</h2>
+                <div class="form">
+                    <label>
+                        Nome
+                        <input v-model="labForm.nome" type="text" placeholder="Ex: Lab 01">
+                    </label>
+                    <label>
+                        Prédio
+                        <select v-model="labForm.predioId">
+                            <option disabled value="">Selecione um prédio</option>
+                            <option v-for="p in predios" :key="p.id" :value="p.id">{{ p.nome }}</option>
+                        </select>
+                    </label>
+                    <div class="buttons">
+                        <button type="button" @click="salvarLab">{{ labEdicao ? 'Atualizar' : 'Cadastrar' }}</button>
+                        <button type="button" class="secondary" @click="limparLab">Limpar</button>
+                    </div>
+                </div>
+                <div v-if="labErro"    class="alert error">{{ labErro }}</div>
+                <div v-if="labSucesso" class="alert success">{{ labSucesso }}</div>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <h2>Laboratórios cadastrados</h2>
+                    <button @click="carregarLabs">Atualizar</button>
+                </div>
+                <p v-if="carregandoLabs">Carregando...</p>
+                <table v-else-if="labs.length" class="table">
+                    <thead><tr><th>ID</th><th>Nome</th><th>Prédio</th><th>PCs</th><th>Ações</th></tr></thead>
+                    <tbody>
+                    <tr v-for="l in labs" :key="l.id">
+                        <td>{{ l.id }}</td>
+                        <td>{{ l.nome }}</td>
+                        <td>{{ l.predioNome }}</td>
+                        <td><span class="badge">{{ l.totalComputadores }}</span></td>
+                        <td class="actions">
+                            <button class="edit-btn" @click="editarLab(l)">Editar</button>
+                            <button class="danger"   @click="removerLab(l.id)">Excluir</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p v-else class="empty">Nenhum laboratório cadastrado.</p>
+            </section>
+        </div>
+
+        <!-- ======= ABA COMPUTADORES ======= -->
+        <div v-if="aba === 'computadores'" class="grid">
+            <section class="card">
+                <h2>{{ pcEdicao ? 'Editar computador' : 'Novo computador' }}</h2>
+                <div class="form">
+                    <label>
+                        Patrimônio
+                        <input v-model="pcForm.patrimonio" type="text" placeholder="Ex: PC-001">
+                    </label>
+                    <label>
+                        Laboratório
+                        <select v-model="pcForm.laboratorioId">
+                            <option disabled value="">Selecione um laboratório</option>
+                            <option v-for="l in labs" :key="l.id" :value="l.id">{{ l.nome }} ({{ l.predioNome }})</option>
+                        </select>
+                    </label>
+                    <div class="buttons">
+                        <button type="button" @click="salvarPc">{{ pcEdicao ? 'Atualizar' : 'Cadastrar' }}</button>
+                        <button type="button" class="secondary" @click="limparPc">Limpar</button>
+                    </div>
+                </div>
+                <div v-if="pcErro"    class="alert error">{{ pcErro }}</div>
+                <div v-if="pcSucesso" class="alert success">{{ pcSucesso }}</div>
+            </section>
+
+            <section class="card">
+                <div class="section-title">
+                    <h2>Computadores cadastrados</h2>
+                    <button @click="carregarPcs">Atualizar</button>
+                </div>
+                <p v-if="carregandoPcs">Carregando...</p>
+                <table v-else-if="pcs.length" class="table">
+                    <thead><tr><th>ID</th><th>Patrimônio</th><th>Laboratório</th><th>Prédio</th><th>Ações</th></tr></thead>
+                    <tbody>
+                    <tr v-for="c in pcs" :key="c.id">
+                        <td>{{ c.id }}</td>
+                        <td>{{ c.patrimonio }}</td>
+                        <td>{{ c.laboratorioNome }}</td>
+                        <td>{{ c.predioNome }}</td>
+                        <td class="actions">
+                            <button class="edit-btn" @click="editarPc(c)">Editar</button>
+                            <button class="danger"   @click="removerPc(c.id)">Excluir</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p v-else class="empty">Nenhum computador cadastrado.</p>
+            </section>
+        </div>
+
+    </main>
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+    data() {
+        return {
+            aba: 'predios',
+
+            // --- PRÉDIOS ---
+            predios: [], carregandoPredios: false,
+            predioErro: '', predioSucesso: '',
+            predioEdicao: null,
+            predioForm: { nome: '' },
+
+            // --- LABORATÓRIOS ---
+            labs: [], carregandoLabs: false,
+            labErro: '', labSucesso: '',
+            labEdicao: null,
+            labForm: { nome: '', predioId: '' },
+
+            // --- COMPUTADORES ---
+            pcs: [], carregandoPcs: false,
+            pcErro: '', pcSucesso: '',
+            pcEdicao: null,
+            pcForm: { patrimonio: '', laboratorioId: '' },
+        }
+    },
+
+    mounted() {
+        this.carregarPredios();
+        this.carregarLabs();
+        this.carregarPcs();
+    },
+
+    methods: {
+        // ========== PRÉDIOS ==========
+        async carregarPredios() {
+            this.carregandoPredios = true;
+            try { this.predios = (await axios.get('/predios')).data; }
+            catch { this.predioErro = 'Erro ao carregar prédios.'; }
+            finally { this.carregandoPredios = false; }
+        },
+        editarPredio(p) {
+            this.predioEdicao = p.id;
+            this.predioForm   = { nome: p.nome };
+            this.predioErro = ''; this.predioSucesso = '';
+        },
+        limparPredio() {
+            this.predioEdicao = null;
+            this.predioForm   = { nome: '' };
+            this.predioErro = ''; this.predioSucesso = '';
+        },
+        async salvarPredio() {
+            this.predioErro = ''; this.predioSucesso = '';
+            try {
+                if (this.predioEdicao) {
+                    await axios.put(`/predios/${this.predioEdicao}`, this.predioForm);
+                    this.predioSucesso = 'Prédio atualizado com sucesso.';
+                } else {
+                    await axios.post('/predios', this.predioForm);
+                    this.predioSucesso = 'Prédio cadastrado com sucesso.';
+                }
+                this.limparPredio();
+                await this.carregarPredios();
+            } catch(e) { this.predioErro = this.extrairErro(e); }
+        },
+        async removerPredio(id) {
+            if (!confirm('Remover este prédio e todos os seus laboratórios e computadores?')) return;
+            try {
+                await axios.delete(`/predios/${id}`);
+                this.predioSucesso = 'Prédio removido.';
+                await this.carregarPredios();
+                await this.carregarLabs();
+                await this.carregarPcs();
+            } catch(e) { this.predioErro = this.extrairErro(e); }
+        },
+
+        // ========== LABORATÓRIOS ==========
+        async carregarLabs() {
+            this.carregandoLabs = true;
+            try { this.labs = (await axios.get('/laboratorios')).data; }
+            catch { this.labErro = 'Erro ao carregar laboratórios.'; }
+            finally { this.carregandoLabs = false; }
+        },
+        editarLab(l) {
+            this.labEdicao = l.id;
+            this.labForm   = { nome: l.nome, predioId: l.predioId };
+            this.labErro = ''; this.labSucesso = '';
+        },
+        limparLab() {
+            this.labEdicao = null;
+            this.labForm   = { nome: '', predioId: '' };
+            this.labErro = ''; this.labSucesso = '';
+        },
+        async salvarLab() {
+            this.labErro = ''; this.labSucesso = '';
+            try {
+                if (this.labEdicao) {
+                    await axios.put(`/laboratorios/${this.labEdicao}`, this.labForm);
+                    this.labSucesso = 'Laboratório atualizado com sucesso.';
+                } else {
+                    await axios.post('/laboratorios', this.labForm);
+                    this.labSucesso = 'Laboratório cadastrado com sucesso.';
+                }
+                this.limparLab();
+                await this.carregarLabs();
+                await this.carregarPredios();
+            } catch(e) { this.labErro = this.extrairErro(e); }
+        },
+        async removerLab(id) {
+            if (!confirm('Remover este laboratório e todos os seus computadores?')) return;
+            try {
+                await axios.delete(`/laboratorios/${id}`);
+                this.labSucesso = 'Laboratório removido.';
+                await this.carregarLabs();
+                await this.carregarPcs();
+                await this.carregarPredios();
+            } catch(e) { this.labErro = this.extrairErro(e); }
+        },
+
+        // ========== COMPUTADORES ==========
+        async carregarPcs() {
+            this.carregandoPcs = true;
+            try { this.pcs = (await axios.get('/computadores')).data; }
+            catch { this.pcErro = 'Erro ao carregar computadores.'; }
+            finally { this.carregandoPcs = false; }
+        },
+        editarPc(c) {
+            this.pcEdicao = c.id;
+            this.pcForm   = { patrimonio: c.patrimonio, laboratorioId: c.laboratorioId };
+            this.pcErro = ''; this.pcSucesso = '';
+        },
+        limparPc() {
+            this.pcEdicao = null;
+            this.pcForm   = { patrimonio: '', laboratorioId: '' };
+            this.pcErro = ''; this.pcSucesso = '';
+        },
+        async salvarPc() {
+            this.pcErro = ''; this.pcSucesso = '';
+            try {
+                if (this.pcEdicao) {
+                    await axios.put(`/computadores/${this.pcEdicao}`, this.pcForm);
+                    this.pcSucesso = 'Computador atualizado com sucesso.';
+                } else {
+                    await axios.post('/computadores', this.pcForm);
+                    this.pcSucesso = 'Computador cadastrado com sucesso.';
+                }
+                this.limparPc();
+                await this.carregarPcs();
+                await this.carregarLabs();
+            } catch(e) { this.pcErro = this.extrairErro(e); }
+        },
+        async removerPc(id) {
+            if (!confirm('Remover este computador?')) return;
+            try {
+                await axios.delete(`/computadores/${id}`);
+                this.pcSucesso = 'Computador removido.';
+                await this.carregarPcs();
+                await this.carregarLabs();
+            } catch(e) { this.pcErro = this.extrairErro(e); }
+        },
+
+        // ========== UTILITÁRIO ==========
+        extrairErro(error) {
+            const body = error?.response?.data;
+            if (body?.erro)   return body.erro;
+            if (body?.erros)  return Object.values(body.erros).join(' | ');
+            return 'Ocorreu um erro ao processar a operação.';
+        }
+    }
+}).mount('#app');
+</script>
+</body>
+</html>
