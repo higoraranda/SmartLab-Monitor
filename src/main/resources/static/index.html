@@ -16,8 +16,8 @@
         <div class="sidebar-brand">
             <div class="brand-icon">
                 <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
-                    <polyline points="9 22 9 12 15 12 15 22"/>
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <path d="M8 21h8M12 17v4"/>
                 </svg>
             </div>
             <div class="brand-text">
@@ -34,6 +34,16 @@
                     <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
                 </svg>
                 Dashboard
+            </button>
+
+            <!-- Monitoramento -->
+            <button class="nav-item" :class="{ active: page === 'monitoramento' }" @click="goTo('monitoramento')">
+                <svg class="nav-icon nav-icon-green" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                </svg>
+                Monitoramento
+                <span v-if="pcsOciosos > 0" class="nav-badge-warn">{{ pcsOciosos }}</span>
             </button>
 
             <!-- Prédios -->
@@ -118,13 +128,11 @@
                     </div>
                 </div>
 
-                <div class="stats-grid">
+                <div class="stats-grid stats-grid-6">
                     <div class="stat-card">
                         <div class="stat-icon stat-icon-blue">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M6 22V4a2 2 0 012-2h8a2 2 0 012 2v18Z"/>
-                                <path d="M6 12H4a2 2 0 00-2 2v6a2 2 0 002 2h2"/>
-                                <path d="M18 9h2a2 2 0 012 2v9a2 2 0 01-2 2h-2"/>
                                 <path d="M10 6h4M10 10h4M10 14h4M10 18h4"/>
                             </svg>
                         </div>
@@ -138,7 +146,7 @@
                         <div class="stat-icon stat-icon-purple">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.55a1 1 0 00.9 1.45h12.76a1 1 0 00.9-1.45l-5.069-10.127A2 2 0 0114 9.527V2"/>
-                                <path d="M8.5 2h7"/><path d="M7 16h10"/>
+                                <path d="M8.5 2h7"/>
                             </svg>
                         </div>
                         <div class="stat-info">
@@ -159,6 +167,47 @@
                             <div class="stat-label">Computadores</div>
                         </div>
                     </div>
+
+                    <div class="stat-card stat-card-green" @click="goTo('monitoramento')">
+                        <div class="stat-icon stat-icon-green">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ pcsEmUso }}</div>
+                            <div class="stat-label">Em Uso</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-card-yellow" @click="goTo('monitoramento')">
+                        <div class="stat-icon stat-icon-yellow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <line x1="12" y1="8" x2="12" y2="12"/>
+                                <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ pcsOciosos }}</div>
+                            <div class="stat-label">Ociosos</div>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon stat-icon-gray">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="2" y="3" width="20" height="14" rx="2"/>
+                                <path d="M8 21h8M12 17v4"/>
+                                <line x1="4" y1="5" x2="20" y2="19"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-number">{{ pcsDesligados }}</div>
+                            <div class="stat-label">Desligados</div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="section-block">
@@ -171,7 +220,6 @@
                                     <polyline points="14 2 14 8 20 8"/>
                                     <line x1="16" y1="13" x2="8" y2="13"/>
                                     <line x1="16" y1="17" x2="8" y2="17"/>
-                                    <polyline points="10 9 9 9 8 9"/>
                                 </svg>
                             </div>
                             <div>
@@ -179,19 +227,18 @@
                                 <div class="quick-card-sub">Documentação da API</div>
                             </div>
                         </a>
-                        <a class="quick-card" href="/h2-console" target="_blank">
-                            <div class="quick-card-icon quick-card-icon-purple">
+                        <button class="quick-card" @click="goTo('monitoramento')">
+                            <div class="quick-card-icon quick-card-icon-green">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
-                                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/>
                                 </svg>
                             </div>
                             <div>
-                                <div class="quick-card-title">H2 Console</div>
-                                <div class="quick-card-sub">Banco de dados em memória</div>
+                                <div class="quick-card-title">Monitoramento</div>
+                                <div class="quick-card-sub">Simular atividade de mouse</div>
                             </div>
-                        </a>
+                        </button>
                     </div>
                 </div>
 
@@ -235,6 +282,100 @@
                 </div>
             </div>
 
+            <!-- ========== MONITORAMENTO ========== -->
+            <div v-if="page === 'monitoramento'">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">Monitoramento de Inatividade</h2>
+                        <p class="page-subtitle">Mova o mouse sobre um computador para simular atividade. Pare de mover para iniciar a contagem regressiva.</p>
+                    </div>
+                    <button class="btn-outline" @click="carregarPcs" style="gap:.4rem">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16">
+                            <polyline points="23 4 23 10 17 10"/>
+                            <path d="M20.49 15a9 9 0 1 1-.08-5"/>
+                        </svg>
+                        Atualizar
+                    </button>
+                </div>
+
+                <!-- legenda -->
+                <div class="monitor-legend">
+                    <span class="legend-item"><span class="status-dot dot-green"></span> Em Uso — mouse detectado recentemente</span>
+                    <span class="legend-item"><span class="status-dot dot-yellow"></span> Ocioso — aguardando desligamento (1 min)</span>
+                    <span class="legend-item"><span class="status-dot dot-gray"></span> Desligado</span>
+                </div>
+
+                <p v-if="pcs.length === 0" class="empty-text">Nenhum computador cadastrado ainda.</p>
+
+                <div class="monitor-grid">
+                    <div
+                        v-for="pc in pcs"
+                        :key="pc.id"
+                        class="monitor-card"
+                        :class="monitorCardClass(pc.status)"
+                        @mousemove="onMouseMove(pc)"
+                        @mouseleave="onMouseLeave(pc)"
+                    >
+                        <!-- Indicador de status -->
+                        <div class="monitor-status-row">
+                            <span class="status-dot" :class="dotClass(pc.status)"></span>
+                            <span class="monitor-status-label" :class="statusLabelClass(pc.status)">{{ statusLabel(pc.status) }}</span>
+                            <span v-if="pc.status !== 'DESLIGADO'" class="monitor-countdown">{{ countdown(pc) }}</span>
+                        </div>
+
+                        <!-- Nome da máquina -->
+                        <div class="monitor-pc-name">{{ pc.patrimonio }}</div>
+                        <div class="monitor-pc-loc">{{ pc.laboratorioNome }} &middot; {{ pc.predioNome }}</div>
+
+                        <!-- Zona de simulação de mouse -->
+                        <div class="monitor-mouse-zone" :class="{ 'zone-active': zonaAtiva[pc.id] }">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="28" height="28" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 3a2 2 0 012-2h10a2 2 0 012 2v14a2 2 0 01-2 2H7a2 2 0 01-2-2V3z"/>
+                                <path d="M12 3v5"/>
+                            </svg>
+                            <span v-if="zonaAtiva[pc.id]">Atividade detectada!</span>
+                            <span v-else-if="pc.status === 'DESLIGADO'">Ligue para monitorar</span>
+                            <span v-else>Mova o mouse aqui</span>
+                        </div>
+
+                        <!-- Configuração de tempo -->
+                        <div class="monitor-time-config">
+                            <label class="monitor-time-label">
+                                Inatividade: <strong>{{ temposLocais[pc.id] || pc.tempoInativaMinutos }} min</strong>
+                            </label>
+                            <input
+                                type="range" min="1" max="30"
+                                :value="temposLocais[pc.id] || pc.tempoInativaMinutos"
+                                @input="temposLocais[pc.id] = +$event.target.value"
+                                @change="salvarTempo(pc)"
+                                class="monitor-slider"
+                            >
+                        </div>
+
+                        <!-- Botões de ação -->
+                        <div class="monitor-actions">
+                            <button
+                                v-if="pc.status === 'DESLIGADO'"
+                                class="btn-monitor btn-ligar"
+                                @click.stop="ligarPc(pc.id)"
+                            >Ligar</button>
+                            <button
+                                v-else
+                                class="btn-monitor btn-desligar"
+                                @click.stop="desligarPc(pc.id)"
+                            >Desligar</button>
+                            <button
+                                class="btn-monitor btn-atividade"
+                                :disabled="pc.status === 'DESLIGADO'"
+                                @click.stop="simularAtividade(pc.id)"
+                            >
+                                Simular Clique
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- ========== PRÉDIO FORM ========== -->
             <div v-if="page === 'predios-novo' || page === 'predios-editar'">
                 <div class="page-back-header">
@@ -262,10 +403,8 @@
                             <label class="form-label">Nome do Prédio <span class="required">*</span></label>
                             <input v-model="predioForm.nome" type="text" class="form-input" placeholder="Ex: Bloco A">
                         </div>
-
                         <div v-if="predioErro" class="alert-error">{{ predioErro }}</div>
                         <div v-if="predioSucesso" class="alert-success">{{ predioSucesso }}</div>
-
                         <div class="form-actions">
                             <button class="btn-outline" @click="goTo('predios-lista')">Cancelar</button>
                             <button class="btn-primary btn-blue" @click="salvarPredio">
@@ -348,7 +487,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div v-if="predioErro" class="alert-error mt-1">{{ predioErro }}</div>
                 <div v-if="predioSucesso" class="alert-success mt-1">{{ predioSucesso }}</div>
             </div>
@@ -387,10 +525,8 @@
                                 <option v-for="p in predios" :key="p.id" :value="p.id">{{ p.nome }}</option>
                             </select>
                         </div>
-
                         <div v-if="labErro" class="alert-error">{{ labErro }}</div>
                         <div v-if="labSucesso" class="alert-success">{{ labSucesso }}</div>
-
                         <div class="form-actions">
                             <button class="btn-outline" @click="goTo('labs-lista')">Cancelar</button>
                             <button class="btn-primary btn-purple" @click="salvarLab">
@@ -473,7 +609,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div v-if="labErro" class="alert-error mt-1">{{ labErro }}</div>
                 <div v-if="labSucesso" class="alert-success mt-1">{{ labSucesso }}</div>
             </div>
@@ -514,10 +649,13 @@
                                 </select>
                             </div>
                         </div>
-
+                        <div class="form-group">
+                            <label class="form-label">Tempo de Inatividade (minutos)</label>
+                            <input v-model.number="pcForm.tempoInativaMinutos" type="number" min="1" max="120" class="form-input" placeholder="Padrão: 10 minutos">
+                            <span class="form-hint">Após esse tempo sem atividade de mouse, a máquina será marcada como ociosa.</span>
+                        </div>
                         <div v-if="pcErro" class="alert-error">{{ pcErro }}</div>
                         <div v-if="pcSucesso" class="alert-success">{{ pcSucesso }}</div>
-
                         <div class="form-actions">
                             <button class="btn-outline" @click="goTo('pcs-lista')">Cancelar</button>
                             <button class="btn-primary btn-teal" @click="salvarPc">
@@ -560,14 +698,22 @@
                         <thead>
                         <tr>
                             <th>Patrimônio</th>
+                            <th>Status</th>
                             <th>Laboratório</th>
                             <th>Prédio</th>
+                            <th>Inatividade</th>
                             <th>Ações</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr v-for="c in filteredPcs" :key="c.id">
                             <td><span class="patrimonio-badge">{{ c.patrimonio }}</span></td>
+                            <td>
+                                <span class="status-badge-inline" :class="statusBadgeClass(c.status)">
+                                    <span class="status-dot" :class="dotClass(c.status)"></span>
+                                    {{ statusLabel(c.status) }}
+                                </span>
+                            </td>
                             <td>
                                 <div class="lab-cell">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -577,6 +723,7 @@
                                 </div>
                             </td>
                             <td>{{ c.predioNome }}</td>
+                            <td>{{ c.tempoInativaMinutos }} min</td>
                             <td class="actions-cell">
                                 <button class="icon-btn icon-btn-edit" @click="editarPc(c)" title="Editar">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -597,7 +744,6 @@
                         </tbody>
                     </table>
                 </div>
-
                 <div v-if="pcErro" class="alert-error mt-1">{{ pcErro }}</div>
                 <div v-if="pcSucesso" class="alert-success mt-1">{{ pcSucesso }}</div>
             </div>
@@ -607,7 +753,7 @@
 </div>
 
 <script>
-const { createApp } = Vue;
+const { createApp, reactive } = Vue;
 
 createApp({
     data() {
@@ -635,7 +781,17 @@ createApp({
             pcs: [], carregandoPcs: false,
             pcErro: '', pcSucesso: '',
             pcEdicao: null,
-            pcForm: { patrimonio: '', laboratorioId: '' },
+            pcForm: { patrimonio: '', laboratorioId: '', tempoInativaMinutos: 10 },
+
+            // MONITORAMENTO
+            // Armazena se o mouse está sobre a zona de atividade de cada PC
+            zonaAtiva: {},
+            // Throttle: último instante em que enviamos heartbeat para cada PC
+            ultimoHeartbeat: {},
+            // Tempos ajustados localmente no slider antes de salvar
+            temposLocais: {},
+            // Intervalo de polling de status
+            pollingInterval: null,
         };
     },
 
@@ -658,12 +814,25 @@ createApp({
             const q = this.searchPcs.toLowerCase();
             return this.pcs.filter(c => c.patrimonio.toLowerCase().includes(q));
         },
+        pcsEmUso()     { return this.pcs.filter(c => c.status === 'EM_USO').length; },
+        pcsOciosos()   { return this.pcs.filter(c => c.status === 'OCIOSO').length; },
+        pcsDesligados(){ return this.pcs.filter(c => c.status === 'DESLIGADO').length; },
     },
 
     mounted() {
         this.carregarPredios();
         this.carregarLabs();
         this.carregarPcs();
+        // Atualiza os status a cada 15 segundos para refletir o que o scheduler fez
+        this.pollingInterval = setInterval(() => {
+            if (this.page === 'monitoramento' || this.page === 'dashboard') {
+                this.carregarPcs();
+            }
+        }, 15_000);
+    },
+
+    beforeUnmount() {
+        clearInterval(this.pollingInterval);
     },
 
     methods: {
@@ -672,33 +841,138 @@ createApp({
             if (p.startsWith('labs'))    this.sections.labs    = true;
             if (p.startsWith('pcs'))     this.sections.pcs     = true;
 
-            if (p === 'predios-novo') {
-                this.predioEdicao = null;
-                this.predioForm   = { nome: '' };
-                this.predioErro   = ''; this.predioSucesso = '';
-            }
-            if (p === 'labs-novo') {
-                this.labEdicao = null;
-                this.labForm   = { nome: '', predioId: '' };
-                this.labErro   = ''; this.labSucesso = '';
-            }
-            if (p === 'pcs-novo') {
-                this.pcEdicao = null;
-                this.pcForm   = { patrimonio: '', laboratorioId: '' };
-                this.pcErro   = ''; this.pcSucesso = '';
-            }
+            if (p === 'predios-novo') { this.predioEdicao = null; this.predioForm = { nome: '' }; this.predioErro = ''; this.predioSucesso = ''; }
+            if (p === 'labs-novo')    { this.labEdicao = null; this.labForm = { nome: '', predioId: '' }; this.labErro = ''; this.labSucesso = ''; }
+            if (p === 'pcs-novo')     { this.pcEdicao = null; this.pcForm = { patrimonio: '', laboratorioId: '', tempoInativaMinutos: 10 }; this.pcErro = ''; this.pcSucesso = ''; }
 
             this.page = p;
         },
 
-        toggleSection(s) {
-            this.sections[s] = !this.sections[s];
-        },
+        toggleSection(s) { this.sections[s] = !this.sections[s]; },
 
         computadoresPorPredio(predioId) {
             return this.labs
                 .filter(l => l.predioId === predioId)
                 .reduce((sum, l) => sum + (l.totalComputadores || 0), 0);
+        },
+
+        // ========== HELPERS DE STATUS ==========
+
+        statusLabel(status) {
+            if (status === 'EM_USO')    return 'Em Uso';
+            if (status === 'OCIOSO')    return 'Ocioso';
+            if (status === 'DESLIGADO') return 'Desligado';
+            return status;
+        },
+
+        dotClass(status) {
+            if (status === 'EM_USO')    return 'dot-green';
+            if (status === 'OCIOSO')    return 'dot-yellow';
+            return 'dot-gray';
+        },
+
+        statusLabelClass(status) {
+            if (status === 'EM_USO')    return 'label-green';
+            if (status === 'OCIOSO')    return 'label-yellow';
+            return 'label-gray';
+        },
+
+        statusBadgeClass(status) {
+            if (status === 'EM_USO')    return 'badge-green';
+            if (status === 'OCIOSO')    return 'badge-yellow';
+            return 'badge-gray';
+        },
+
+        monitorCardClass(status) {
+            if (status === 'EM_USO')    return 'card-active';
+            if (status === 'OCIOSO')    return 'card-ocioso';
+            return 'card-off';
+        },
+
+        // Conta o tempo restante antes da próxima mudança de status
+        countdown(pc) {
+            if (!pc.ultimaAtividade) return '—';
+            const ultima = new Date(pc.ultimaAtividade);
+            const agora  = new Date();
+            const passados = (agora - ultima) / 60000; // minutos
+
+            if (pc.status === 'EM_USO') {
+                const restam = pc.tempoInativaMinutos - passados;
+                if (restam <= 0) return 'Marcando ocioso...';
+                return `Ocioso em ${Math.ceil(restam)} min`;
+            }
+            if (pc.status === 'OCIOSO') {
+                const restam = (pc.tempoInativaMinutos + 1) - passados;
+                if (restam <= 0) return 'Desligando...';
+                return `Desliga em ${Math.ceil(restam)} min`;
+            }
+            return '—';
+        },
+
+        // ========== MONITORAMENTO ==========
+
+        onMouseMove(pc) {
+            if (pc.status === 'DESLIGADO') return;
+            this.zonaAtiva[pc.id] = true;
+
+            // Throttle: envia heartbeat no máximo 1 vez a cada 5 segundos
+            const agora = Date.now();
+            const ultimo = this.ultimoHeartbeat[pc.id] || 0;
+            if (agora - ultimo >= 5000) {
+                this.ultimoHeartbeat[pc.id] = agora;
+                this.enviarHeartbeat(pc.id);
+            }
+        },
+
+        onMouseLeave(pc) {
+            this.zonaAtiva[pc.id] = false;
+        },
+
+        async enviarHeartbeat(id) {
+            try {
+                const { data } = await axios.post(`/computadores/${id}/atividade`);
+                this.atualizarPc(data);
+            } catch { /* ignora falhas silenciosas no heartbeat */ }
+        },
+
+        async simularAtividade(id) {
+            try {
+                const { data } = await axios.post(`/computadores/${id}/atividade`);
+                this.atualizarPc(data);
+            } catch(e) { alert(this.extrairErro(e)); }
+        },
+
+        async ligarPc(id) {
+            try {
+                const { data } = await axios.post(`/computadores/${id}/ligar`);
+                this.atualizarPc(data);
+            } catch(e) { alert(this.extrairErro(e)); }
+        },
+
+        async desligarPc(id) {
+            try {
+                const { data } = await axios.post(`/computadores/${id}/desligar`);
+                this.atualizarPc(data);
+                this.zonaAtiva[id] = false;
+            } catch(e) { alert(this.extrairErro(e)); }
+        },
+
+        async salvarTempo(pc) {
+            const novoTempo = this.temposLocais[pc.id] || pc.tempoInativaMinutos;
+            try {
+                const { data } = await axios.put(`/computadores/${pc.id}`, {
+                    patrimonio: pc.patrimonio,
+                    laboratorioId: pc.laboratorioId,
+                    tempoInativaMinutos: novoTempo,
+                });
+                this.atualizarPc(data);
+            } catch { /* silencioso */ }
+        },
+
+        // Atualiza apenas o PC afetado na lista, sem recarregar tudo
+        atualizarPc(pcAtualizado) {
+            const idx = this.pcs.findIndex(c => c.id === pcAtualizado.id);
+            if (idx !== -1) this.pcs[idx] = pcAtualizado;
         },
 
         // ========== PRÉDIOS ==========
@@ -711,7 +985,7 @@ createApp({
         editarPredio(p) {
             this.predioEdicao = p.id;
             this.predioForm   = { nome: p.nome };
-            this.predioErro   = ''; this.predioSucesso = '';
+            this.predioErro = ''; this.predioSucesso = '';
             this.page = 'predios-editar';
         },
         async salvarPredio() {
@@ -752,7 +1026,7 @@ createApp({
         editarLab(l) {
             this.labEdicao = l.id;
             this.labForm   = { nome: l.nome, predioId: l.predioId };
-            this.labErro   = ''; this.labSucesso = '';
+            this.labErro = ''; this.labSucesso = '';
             this.page = 'labs-editar';
         },
         async salvarLab() {
@@ -793,8 +1067,8 @@ createApp({
         },
         editarPc(c) {
             this.pcEdicao = c.id;
-            this.pcForm   = { patrimonio: c.patrimonio, laboratorioId: c.laboratorioId };
-            this.pcErro   = ''; this.pcSucesso = '';
+            this.pcForm   = { patrimonio: c.patrimonio, laboratorioId: c.laboratorioId, tempoInativaMinutos: c.tempoInativaMinutos };
+            this.pcErro = ''; this.pcSucesso = '';
             this.page = 'pcs-editar';
         },
         async salvarPc() {
@@ -808,7 +1082,7 @@ createApp({
                     this.pcSucesso = 'Computador cadastrado com sucesso.';
                 }
                 this.pcEdicao = null;
-                this.pcForm   = { patrimonio: '', laboratorioId: '' };
+                this.pcForm   = { patrimonio: '', laboratorioId: '', tempoInativaMinutos: 10 };
                 await this.carregarPcs();
                 await this.carregarLabs();
                 setTimeout(() => this.goTo('pcs-lista'), 900);

@@ -1,19 +1,30 @@
 # ==============================================
 # RENDER.YAML — Configuração do Serviço no Render
-#
-# Este arquivo instrui o Render sobre como construir
-# e rodar a aplicação SmartLab Monitor.
-# Basta conectar este repositório no painel do Render
-# e ele lerá este arquivo automaticamente.
 # ==============================================
 
 services:
-  - type: web             # serviço web com URL pública
+  - type: web
     name: smartlab-monitor
-    runtime: docker       # usa o Dockerfile para construir a imagem
-    plan: free            # plano gratuito do Render
+    runtime: docker
+    plan: free
 
-    # Variáveis de ambiente que o Render injeta na aplicação
     envVars:
       - key: PORT
-        value: 8080       # porta que o Spring Boot vai escutar
+        value: 8080
+
+      # Ativa o perfil de produção (PostgreSQL via Neon)
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      # Cole aqui a JDBC connection string do Neon
+      # Formato: jdbc:postgresql://xxx.neon.tech/neondb?sslmode=require
+      - key: DATABASE_URL
+        value: COLE_AQUI_A_URL_DO_NEON
+
+      # Usuário do banco (visível no painel do Neon em Connection Details)
+      - key: DB_USER
+        value: COLE_AQUI_O_USUARIO_DO_NEON
+
+      # Senha do banco — configure como "Secret" no painel do Render
+      - key: DB_PASSWORD
+        value: COLE_AQUI_A_SENHA_DO_NEON
