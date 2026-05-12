@@ -1,0 +1,19 @@
+# ==============================================
+# RENDER.YAML — Configuração do Serviço no Render
+#
+# Este arquivo instrui o Render sobre como construir
+# e rodar a aplicação SmartLab Monitor.
+# Basta conectar este repositório no painel do Render
+# e ele lerá este arquivo automaticamente.
+# ==============================================
+
+services:
+  - type: web             # serviço web com URL pública
+    name: smartlab-monitor
+    runtime: docker       # usa o Dockerfile para construir a imagem
+    plan: free            # plano gratuito do Render
+
+    # Variáveis de ambiente que o Render injeta na aplicação
+    envVars:
+      - key: PORT
+        value: 8080       # porta que o Spring Boot vai escutar
