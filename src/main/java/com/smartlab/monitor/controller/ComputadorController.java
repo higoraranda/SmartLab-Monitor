@@ -2,6 +2,7 @@ package com.smartlab.monitor.controller;
 
 import com.smartlab.monitor.dto.ComputadorRequest;
 import com.smartlab.monitor.dto.ComputadorResponse;
+import com.smartlab.monitor.dto.StatusRequest;
 import com.smartlab.monitor.service.ComputadorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -45,6 +46,12 @@ public class ComputadorController {
     @Operation(summary = "Atualiza um computador existente")
     public ComputadorResponse atualizar(@PathVariable Long id, @Valid @RequestBody ComputadorRequest request) {
         return computadorService.atualizar(id, request);
+    }
+
+    @PutMapping("/{id}/status")
+    @Operation(summary = "Atualiza o status do computador (LIGADO, INATIVO, DESLIGADO)")
+    public ComputadorResponse atualizarStatus(@PathVariable Long id, @Valid @RequestBody StatusRequest request) {
+        return computadorService.atualizarStatus(id, request.status());
     }
 
     @DeleteMapping("/{id}")

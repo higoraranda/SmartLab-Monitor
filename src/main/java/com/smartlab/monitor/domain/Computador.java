@@ -19,6 +19,10 @@ public class Computador {
     @JsonBackReference("lab-computadores")
     private Laboratorio laboratorio;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'DESLIGADO'")
+    private StatusComputador status = StatusComputador.DESLIGADO;
+
     protected Computador() {
         // construtor protegido para o JPA
     }
@@ -28,9 +32,12 @@ public class Computador {
         this.laboratorio = laboratorio;
     }
 
-    public Long getId()              { return id; }
-    public String getPatrimonio()    { return patrimonio; }
+    public Long getId()                 { return id; }
+    public String getPatrimonio()       { return patrimonio; }
     public Laboratorio getLaboratorio() { return laboratorio; }
+    public StatusComputador getStatus() { return status; }
+
+    public void setStatus(StatusComputador status) { this.status = status; }
 
     public void atualizarDados(String patrimonio, Laboratorio laboratorio) {
         this.patrimonio  = patrimonio;

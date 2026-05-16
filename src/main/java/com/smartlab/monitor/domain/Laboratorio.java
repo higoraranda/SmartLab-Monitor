@@ -26,6 +26,14 @@ public class Laboratorio {
     @JsonManagedReference("lab-computadores")
     private List<Computador> computadores = new ArrayList<>();
 
+    @Column(nullable = false, columnDefinition = "INTEGER DEFAULT 300")
+    private int tempoOciosoGlobal = 300;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "lab_horarios_fixos", joinColumns = @JoinColumn(name = "laboratorio_id"))
+    @Column(name = "horario")
+    private List<String> horariosFixos = new ArrayList<>();
+
     protected Laboratorio() {
         // construtor protegido para o JPA
     }
@@ -39,6 +47,10 @@ public class Laboratorio {
     public String getNome()                   { return nome; }
     public Predio getPredio()                 { return predio; }
     public List<Computador> getComputadores() { return computadores; }
+    public int getTempoOciosoGlobal()         { return tempoOciosoGlobal; }
+    public List<String> getHorariosFixos()    { return horariosFixos; }
+
+    public void setTempoOciosoGlobal(int tempo) { this.tempoOciosoGlobal = tempo; }
 
     public void atualizarDados(String nome, Predio predio) {
         this.nome   = nome;

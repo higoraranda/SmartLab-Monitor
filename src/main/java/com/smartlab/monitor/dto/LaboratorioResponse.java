@@ -1,3 +1,5 @@
 package com.smartlab.monitor.dto;
 
-public record LaboratorioResponse(Long id, String nome, Long predioId, String predioNome, int totalComputadores) {}
+import java.util.List;
+
+public record LaboratorioResponse(Long id, String nome, Long predioId, String predioNome, int totalComputadores, int tempoOciosoGlobal, List<String> horariosFixos) {}

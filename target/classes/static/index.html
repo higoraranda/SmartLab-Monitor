@@ -91,6 +91,14 @@
                     <button class="nav-sub-item" :class="{ active: page === 'pcs-lista' }" @click="goTo('pcs-lista')">Computadores Cadastrados</button>
                 </div>
             </div>
+
+            <!-- Políticas -->
+            <button class="nav-item" :class="{ active: page === 'politicas' }" @click="goTo('politicas')">
+                <svg class="nav-icon nav-icon-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Políticas
+            </button>
         </nav>
     </aside>
 
@@ -162,36 +170,43 @@
                 </div>
 
                 <div class="section-block">
-                    <h3 class="section-block-title">Ferramentas</h3>
-                    <div class="quick-cards">
-                        <a class="quick-card" href="/swagger-ui.html" target="_blank">
-                            <div class="quick-card-icon quick-card-icon-blue">
+                    <h3 class="section-block-title">Status dos Computadores</h3>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-green">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                                    <polyline points="14 2 14 8 20 8"/>
-                                    <line x1="16" y1="13" x2="8" y2="13"/>
-                                    <line x1="16" y1="17" x2="8" y2="17"/>
-                                    <polyline points="10 9 9 9 8 9"/>
+                                    <path d="M18.36 6.64a9 9 0 11-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>
                                 </svg>
                             </div>
-                            <div>
-                                <div class="quick-card-title">Swagger UI</div>
-                                <div class="quick-card-sub">Documentação da API</div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ pcsLigados }}</div>
+                                <div class="stat-label">Ligados</div>
                             </div>
-                        </a>
-                        <a class="quick-card" href="/h2-console" target="_blank">
-                            <div class="quick-card-icon quick-card-icon-purple">
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-purple">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <ellipse cx="12" cy="5" rx="9" ry="3"/>
-                                    <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
-                                    <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+                                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                                 </svg>
                             </div>
-                            <div>
-                                <div class="quick-card-title">H2 Console</div>
-                                <div class="quick-card-sub">Banco de dados em memória</div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ pcsInativos }}</div>
+                                <div class="stat-label">Inativos</div>
                             </div>
-                        </a>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-icon stat-icon-red">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+                                </svg>
+                            </div>
+                            <div class="stat-info">
+                                <div class="stat-number">{{ pcsDesligados }}</div>
+                                <div class="stat-label">Desligados</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -229,6 +244,17 @@
                             <div>
                                 <div class="quick-card-title">Novo Computador</div>
                                 <div class="quick-card-sub">Cadastrar computador</div>
+                            </div>
+                        </button>
+                        <button class="quick-card" @click="goTo('politicas')">
+                            <div class="quick-card-icon quick-card-icon-purple">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="quick-card-title">Políticas</div>
+                                <div class="quick-card-sub">Definir inatividade e horários</div>
                             </div>
                         </button>
                     </div>
@@ -602,6 +628,90 @@
                 <div v-if="pcSucesso" class="alert-success mt-1">{{ pcSucesso }}</div>
             </div>
 
+            <!-- ========== POLÍTICAS ========== -->
+            <div v-if="page === 'politicas'">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">Políticas de Laboratório</h2>
+                        <p class="page-subtitle">Defina inatividade e horários fixos de desligamento</p>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-header form-card-header-purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.55a1 1 0 00.9 1.45h12.76a1 1 0 00.9-1.45l-5.069-10.127A2 2 0 0114 9.527V2"/>
+                            <path d="M8.5 2h7"/><path d="M7 16h10"/>
+                        </svg>
+                        <span>Selecionar Laboratório</span>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="form-label">Laboratório</label>
+                            <select v-model="politicaLabId" class="form-select" @change="carregarPoliticasLab">
+                                <option disabled value="">Selecione um laboratório...</option>
+                                <option v-for="l in labs" :key="l.id" :value="l.id">{{ l.nome }} — {{ l.predioNome }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="politicaLabDados">
+                    <!-- Tempo de Inatividade -->
+                    <div class="form-card mt-1">
+                        <div class="form-card-header form-card-header-purple">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                            </svg>
+                            <span>Tempo de Inatividade — atual: {{ politicaLabDados.tempoOciosoGlobal }}s</span>
+                        </div>
+                        <div class="form-body">
+                            <div class="form-group">
+                                <label class="form-label">Novo tempo limite (em segundos, mínimo 300) <span class="required">*</span></label>
+                                <input v-model.number="politicaNovoTempo" type="number" min="300" class="form-input" placeholder="Ex: 300">
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn-primary btn-purple" @click="salvarInatividade">Salvar Inatividade</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Horários Fixos -->
+                    <div class="form-card mt-1">
+                        <div class="form-card-header form-card-header-purple">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
+                            </svg>
+                            <span>Horários Fixos de Desligamento</span>
+                        </div>
+                        <div class="form-body">
+                            <div class="form-group">
+                                <label class="form-label">Horários cadastrados</label>
+                                <p v-if="politicaLabDados.horariosFixos.length === 0" class="empty-text" style="padding:0.5rem 0;text-align:left">Nenhum horário cadastrado.</p>
+                                <ul v-else style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0.5rem">
+                                    <li v-for="h in politicaLabDados.horariosFixos" :key="h" class="patrimonio-badge">{{ h }}</li>
+                                </ul>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Adicionar horário (HH:mm) <span class="required">*</span></label>
+                                <input v-model="politicaNovoHorario" type="time" class="form-input" @keyup.enter="adicionarHorarioFixo">
+                            </div>
+
+                            <div class="form-actions">
+                                <button class="btn-outline" @click="limparHorariosFixos" v-if="politicaLabDados.horariosFixos.length > 0">Limpar Todos</button>
+                                <button class="btn-primary btn-purple" @click="adicionarHorarioFixo">Adicionar Horário</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-if="politicaErro" class="alert-error mt-1">{{ politicaErro }}</div>
+                    <div v-if="politicaSucesso" class="alert-success mt-1">{{ politicaSucesso }}</div>
+                </div>
+            </div>
+
         </main>
     </div>
 </div>
@@ -636,6 +746,14 @@ createApp({
             pcErro: '', pcSucesso: '',
             pcEdicao: null,
             pcForm: { patrimonio: '', laboratorioId: '' },
+
+            // POLÍTICAS
+            politicaLabId: '',
+            politicaLabDados: null,
+            politicaNovoTempo: 300,
+            politicaNovoHorario: '',
+            politicaErro: '',
+            politicaSucesso: '',
         };
     },
 
@@ -658,6 +776,9 @@ createApp({
             const q = this.searchPcs.toLowerCase();
             return this.pcs.filter(c => c.patrimonio.toLowerCase().includes(q));
         },
+        pcsLigados()    { return this.pcs.filter(c => c.status === 'LIGADO').length; },
+        pcsInativos()   { return this.pcs.filter(c => c.status === 'INATIVO').length; },
+        pcsDesligados() { return this.pcs.filter(c => c.status === 'DESLIGADO').length; },
     },
 
     mounted() {
@@ -823,6 +944,45 @@ createApp({
                 await this.carregarPcs();
                 await this.carregarLabs();
             } catch(e) { this.pcErro = this.extrairErro(e); }
+        },
+
+        // ========== POLÍTICAS ==========
+        async carregarPoliticasLab() {
+            this.politicaErro = ''; this.politicaSucesso = '';
+            if (!this.politicaLabId) { this.politicaLabDados = null; return; }
+            try {
+                const res = await axios.get(`/laboratorios/${this.politicaLabId}`);
+                this.politicaLabDados = res.data;
+                this.politicaNovoTempo = res.data.tempoOciosoGlobal;
+            } catch(e) { this.politicaErro = this.extrairErro(e); }
+        },
+        async salvarInatividade() {
+            this.politicaErro = ''; this.politicaSucesso = '';
+            try {
+                const res = await axios.put(`/politicas/${this.politicaLabId}/inatividade`,
+                    { tempoOciosoGlobal: this.politicaNovoTempo });
+                this.politicaLabDados = res.data;
+                this.politicaSucesso = 'Tempo de inatividade atualizado com sucesso.';
+            } catch(e) { this.politicaErro = this.extrairErro(e); }
+        },
+        async adicionarHorarioFixo() {
+            this.politicaErro = ''; this.politicaSucesso = '';
+            try {
+                const res = await axios.post(`/politicas/${this.politicaLabId}/horarios`,
+                    { horario: this.politicaNovoHorario });
+                this.politicaLabDados = res.data;
+                this.politicaNovoHorario = '';
+                this.politicaSucesso = 'Horário adicionado com sucesso.';
+            } catch(e) { this.politicaErro = this.extrairErro(e); }
+        },
+        async limparHorariosFixos() {
+            if (!confirm('Remover todos os horários fixos deste laboratório?')) return;
+            this.politicaErro = ''; this.politicaSucesso = '';
+            try {
+                const res = await axios.delete(`/politicas/${this.politicaLabId}/horarios`);
+                this.politicaLabDados = res.data;
+                this.politicaSucesso = 'Horários removidos com sucesso.';
+            } catch(e) { this.politicaErro = this.extrairErro(e); }
         },
 
         extrairErro(error) {
