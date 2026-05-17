@@ -99,6 +99,14 @@
                 </svg>
                 Políticas
             </button>
+
+            <!-- Simular Agente -->
+            <button class="nav-item" :class="{ active: page === 'agente' }" @click="goTo('agente')">
+                <svg class="nav-icon nav-icon-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"/>
+                </svg>
+                Simular Agente
+            </button>
         </nav>
     </aside>
 
@@ -588,6 +596,7 @@
                             <th>Patrimônio</th>
                             <th>Laboratório</th>
                             <th>Prédio</th>
+                            <th>Status</th>
                             <th>Ações</th>
                         </tr>
                         </thead>
@@ -603,6 +612,13 @@
                                 </div>
                             </td>
                             <td>{{ c.predioNome }}</td>
+                            <td>
+                                <select :value="c.status" @change="alterarStatusPc(c.id, $event.target.value)" class="form-select" style="padding:0.35rem 0.5rem;font-size:0.8125rem;width:auto">
+                                    <option value="LIGADO">🟢 Ligado</option>
+                                    <option value="INATIVO">🟡 Inativo</option>
+                                    <option value="DESLIGADO">🔴 Desligado</option>
+                                </select>
+                            </td>
                             <td class="actions-cell">
                                 <button class="icon-btn icon-btn-edit" @click="editarPc(c)" title="Editar">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -667,8 +683,8 @@
                         </div>
                         <div class="form-body">
                             <div class="form-group">
-                                <label class="form-label">Novo tempo limite (em segundos, mínimo 300) <span class="required">*</span></label>
-                                <input v-model.number="politicaNovoTempo" type="number" min="300" class="form-input" placeholder="Ex: 300">
+                                <label class="form-label">Novo tempo limite (em segundos, mínimo 10) <span class="required">*</span></label>
+                                <input v-model.number="politicaNovoTempo" type="number" min="10" class="form-input" placeholder="Ex: 300">
                             </div>
                             <div class="form-actions">
                                 <button class="btn-primary btn-purple" @click="salvarInatividade">Salvar Inatividade</button>
@@ -709,6 +725,105 @@
 
                     <div v-if="politicaErro" class="alert-error mt-1">{{ politicaErro }}</div>
                     <div v-if="politicaSucesso" class="alert-success mt-1">{{ politicaSucesso }}</div>
+                </div>
+            </div>
+
+            <!-- ========== SIMULAR AGENTE ========== -->
+            <div v-if="page === 'agente'">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">Simular Agente Local</h2>
+                        <p class="page-subtitle">Simula o monitoramento de inatividade e horário fixo em um computador</p>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-header form-card-header-teal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                            <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                        </svg>
+                        <span>Selecionar Computador</span>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="form-label">Computador</label>
+                            <select v-model="agentePcId" class="form-select" @change="carregarAgentePc" :disabled="agenteRodando">
+                                <option disabled value="">Selecione um computador...</option>
+                                <option v-for="c in pcs" :key="c.id" :value="c.id">{{ c.patrimonio }} — {{ c.laboratorioNome }} ({{ c.predioNome }})</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="agentePcDados && agenteLabDados" class="mt-1">
+                    <!-- Resumo das regras -->
+                    <div class="form-card">
+                        <div class="form-card-header form-card-header-purple">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                            <span>Regras Aplicadas</span>
+                        </div>
+                        <div class="form-body">
+                            <div class="meta-item"><strong>Tempo limite de inatividade:</strong>&nbsp;{{ agenteLabDados.tempoOciosoGlobal }}s</div>
+                            <div class="meta-item"><strong>Horários fixos:</strong>&nbsp;
+                                <span v-if="agenteLabDados.horariosFixos.length === 0">Nenhum</span>
+                                <span v-else>
+                                    <span v-for="h in agenteLabDados.horariosFixos" :key="h" class="patrimonio-badge" style="margin-right:0.25rem">{{ h }}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Controle / Status -->
+                    <div class="form-card mt-1">
+                        <div class="form-card-header form-card-header-teal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polygon points="5 3 19 12 5 21 5 3"/>
+                            </svg>
+                            <span>Monitoramento</span>
+                        </div>
+                        <div class="form-body">
+                            <p style="color:var(--text-secondary);font-size:0.875rem">
+                                Ao iniciar, qualquer movimento do mouse na tela reseta o contador. O agente para quando o tempo limite for atingido ou quando o horário atual estiver na lista de horários fixos.
+                            </p>
+
+                            <div v-if="agenteRodando" class="alert-success" style="display:flex;align-items:center;gap:1rem">
+                                <div style="font-size:1.5rem;font-weight:700">{{ agenteSegundosOcioso }}s</div>
+                                <div>Ocioso de {{ agenteLabDados.tempoOciosoGlobal }}s — mova o mouse para resetar</div>
+                            </div>
+
+                            <div class="form-actions" style="border-top:none;padding-top:0">
+                                <button v-if="!agenteRodando" class="btn-primary btn-teal" @click="iniciarAgente">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="5 3 19 12 5 21 5 3"/>
+                                    </svg>
+                                    Iniciar Monitoramento
+                                </button>
+                                <button v-else class="btn-delete" style="flex:0 0 auto" @click="pararAgente('cancelado pelo usuário')">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="6" y="6" width="12" height="12"/>
+                                    </svg>
+                                    Parar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Console de logs -->
+                    <div v-if="agenteLogs.length > 0" class="form-card mt-1">
+                        <div class="form-card-header form-card-header-blue">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                            </svg>
+                            <span>Console</span>
+                        </div>
+                        <div style="background:#0f172a;color:#cbd5e1;font-family:'Courier New',monospace;padding:1rem;font-size:0.8125rem;max-height:320px;overflow-y:auto">
+                            <div v-for="(log, i) in agenteLogs" :key="i">{{ log }}</div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -754,6 +869,17 @@ createApp({
             politicaNovoHorario: '',
             politicaErro: '',
             politicaSucesso: '',
+
+            // AGENTE
+            agentePcId: '',
+            agentePcDados: null,
+            agenteLabDados: null,
+            agenteRodando: false,
+            agenteSegundosOcioso: 0,
+            agenteLogs: [],
+            agenteIntervalId: null,
+            agenteMouseHandler: null,
+            agenteMouseMoveu: false,
         };
     },
 
@@ -935,6 +1061,14 @@ createApp({
                 setTimeout(() => this.goTo('pcs-lista'), 900);
             } catch(e) { this.pcErro = this.extrairErro(e); }
         },
+        async alterarStatusPc(id, novoStatus) {
+            this.pcErro = ''; this.pcSucesso = '';
+            try {
+                await axios.put(`/computadores/${id}/status`, { status: novoStatus });
+                this.pcSucesso = `Status do computador alterado para ${novoStatus}.`;
+                await this.carregarPcs();
+            } catch(e) { this.pcErro = this.extrairErro(e); }
+        },
         async removerPc(id) {
             if (!confirm('Remover este computador?')) return;
             this.pcErro = ''; this.pcSucesso = '';
@@ -983,6 +1117,96 @@ createApp({
                 this.politicaLabDados = res.data;
                 this.politicaSucesso = 'Horários removidos com sucesso.';
             } catch(e) { this.politicaErro = this.extrairErro(e); }
+        },
+
+        // ========== AGENTE LOCAL (SIMULAÇÃO) ==========
+        async carregarAgentePc() {
+            this.agentePcDados = null; this.agenteLabDados = null; this.agenteLogs = [];
+            if (!this.agentePcId) return;
+            try {
+                const pcRes  = await axios.get(`/computadores/${this.agentePcId}`);
+                this.agentePcDados = pcRes.data;
+                const labRes = await axios.get(`/laboratorios/${this.agentePcDados.laboratorioId}`);
+                this.agenteLabDados = labRes.data;
+            } catch(e) { this.pcErro = this.extrairErro(e); }
+        },
+        adicionarLog(msg) {
+            this.agenteLogs.push(msg);
+            if (this.agenteLogs.length > 200) this.agenteLogs.shift();
+        },
+        iniciarAgente() {
+            if (!this.agenteLabDados) return;
+            this.agenteSegundosOcioso = 0;
+            this.agenteLogs = [];
+            this.agenteMouseMoveu = false;
+            this.agenteRodando = true;
+
+            this.agenteMouseHandler = () => { this.agenteMouseMoveu = true; };
+            window.addEventListener('mousemove', this.agenteMouseHandler);
+
+            this.adicionarLog('========================================');
+            this.adicionarLog('>>> MONITORAMENTO ATIVO NO PC: ' + this.agentePcDados.patrimonio);
+            this.adicionarLog('>>> LOCALIZAÇÃO: ' + this.agentePcDados.predioNome + ' - ' + this.agentePcDados.laboratorioNome);
+            this.adicionarLog('>>> REGRAS: ' + this.agenteLabDados.tempoOciosoGlobal + 's de limite.');
+            this.adicionarLog('========================================');
+
+            this.agenteIntervalId = setInterval(() => this.tickAgente(), 1000);
+        },
+        tickAgente() {
+            const now = new Date();
+            const pad = (n) => n.toString().padStart(2, '0');
+            const horaAtual   = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+            const horaSimples = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+            // 1) Horário fixo
+            if (this.agenteLabDados.horariosFixos.includes(horaSimples)) {
+                this.adicionarLog(`\n[!] POLÍTICA DE HORÁRIO ATINGIDA (${horaSimples}).`);
+                this.dispararDesligamento();
+                return;
+            }
+
+            // 2) Ociosidade do mouse
+            if (this.agenteMouseMoveu) {
+                if (this.agenteSegundosOcioso > 0) {
+                    this.adicionarLog(`Log [${horaAtual}] Movimento detectado! Resetando tempo...`);
+                }
+                this.agenteSegundosOcioso = 0;
+                this.agenteMouseMoveu = false;
+            } else {
+                this.agenteSegundosOcioso++;
+                this.adicionarLog(`Log [${horaAtual}] Ocioso: ${this.agenteSegundosOcioso}s / ${this.agenteLabDados.tempoOciosoGlobal}s`);
+            }
+
+            if (this.agenteSegundosOcioso >= this.agenteLabDados.tempoOciosoGlobal) {
+                this.adicionarLog('\n[ALERTA] LIMITE DE OCIOSIDADE ATINGIDO!');
+                this.dispararDesligamento();
+            }
+        },
+        async dispararDesligamento() {
+            this.pararAgente();
+            this.adicionarLog('[SISTEMA] Comando enviado: shutdown /s /t 0');
+            try {
+                await axios.put(`/computadores/${this.agentePcId}/status`, { status: 'DESLIGADO' });
+                this.adicionarLog('Simulação concluída — PC marcado como DESLIGADO no banco.');
+                await this.carregarPcs();
+                if (this.agentePcDados) this.agentePcDados.status = 'DESLIGADO';
+            } catch(e) {
+                this.adicionarLog('Erro ao atualizar status: ' + this.extrairErro(e));
+            }
+        },
+        pararAgente(motivo) {
+            if (this.agenteIntervalId) {
+                clearInterval(this.agenteIntervalId);
+                this.agenteIntervalId = null;
+            }
+            if (this.agenteMouseHandler) {
+                window.removeEventListener('mousemove', this.agenteMouseHandler);
+                this.agenteMouseHandler = null;
+            }
+            if (this.agenteRodando && motivo) {
+                this.adicionarLog('[SISTEMA] Monitoramento ' + motivo + '.');
+            }
+            this.agenteRodando = false;
         },
 
         extrairErro(error) {

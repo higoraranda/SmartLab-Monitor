@@ -5,6 +5,6 @@ import jakarta.validation.constraints.NotNull;
 
 public record InatividadeRequest(
         @NotNull(message = "O campo 'tempoOciosoGlobal' é obrigatório.")
-        @Min(value = 300, message = "O tempo de inatividade deve ser de no mínimo 300 segundos (5 minutos).")
+        @Min(value = 10, message = "O tempo de inatividade deve ser de no mínimo 10 segundos.")
         Integer tempoOciosoGlobal
 ) {}
