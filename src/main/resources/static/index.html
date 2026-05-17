@@ -1192,17 +1192,32 @@ createApp({
             if (this.agenteMouseMoveu) {
                 if (this.agenteSegundosOcioso > 0) {
                     this.adicionarLog(`Log [${horaAtual}] Movimento detectado! Resetando tempo...`);
+                    // Mouse voltou a mexer → PC volta para LIGADO
+                    this.atualizarStatusBackground('LIGADO');
                 }
                 this.agenteSegundosOcioso = 0;
                 this.agenteMouseMoveu = false;
             } else {
                 this.agenteSegundosOcioso++;
                 this.adicionarLog(`Log [${horaAtual}] Ocioso: ${this.agenteSegundosOcioso}s / ${this.agenteLabDados.tempoOciosoGlobal}s`);
+                // Primeiro segundo de ociosidade → marca PC como INATIVO
+                if (this.agenteSegundosOcioso === 1) {
+                    this.atualizarStatusBackground('INATIVO');
+                }
             }
 
             if (this.agenteSegundosOcioso >= this.agenteLabDados.tempoOciosoGlobal) {
                 this.adicionarLog('\n[ALERTA] LIMITE DE OCIOSIDADE ATINGIDO!');
                 this.dispararDesligamento();
+            }
+        },
+        async atualizarStatusBackground(novoStatus) {
+            try {
+                await axios.put(`/computadores/${this.agentePcId}/status`, { status: novoStatus });
+                if (this.agentePcDados) this.agentePcDados.status = novoStatus;
+                await this.carregarPcs();
+            } catch(e) {
+                this.adicionarLog('[AVISO] Falha ao atualizar status: ' + this.extrairErro(e));
             }
         },
         async dispararDesligamento() {
