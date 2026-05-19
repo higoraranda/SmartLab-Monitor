@@ -110,13 +110,38 @@
                 </div>
             </div>
 
+            <!-- Histórico -->
+            <div class="nav-section">
+                <button class="nav-section-btn" :class="{ 'section-active': page.startsWith('historico') }" @click="toggleSection('historico')">
+                    <svg class="nav-icon nav-icon-blue" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Histórico</span>
+                    <svg class="nav-chevron" :class="{ 'chevron-open': sections.historico }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </button>
+                <div class="nav-sub" v-show="sections.historico">
+                    <button class="nav-sub-item" :class="{ active: page === 'historico-lista' }" @click="goTo('historico-lista')">Ver Histórico</button>
+                </div>
+            </div>
+
             <!-- Simular Agente -->
-            <button class="nav-item" :class="{ active: page === 'agente' }" @click="goTo('agente')">
-                <svg class="nav-icon nav-icon-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polygon points="5 3 19 12 5 21 5 3"/>
-                </svg>
-                Simular Agente
-            </button>
+            <div class="nav-section">
+                <button class="nav-section-btn" :class="{ 'section-active': page === 'agente' || page === 'agente-predio' }" @click="toggleSection('agente')">
+                    <svg class="nav-icon nav-icon-teal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="5 3 19 12 5 21 5 3"/>
+                    </svg>
+                    <span>Simular Agente</span>
+                    <svg class="nav-chevron" :class="{ 'chevron-open': sections.agente }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </button>
+                <div class="nav-sub" v-show="sections.agente">
+                    <button class="nav-sub-item" :class="{ active: page === 'agente' }" @click="goTo('agente')">PC Individual</button>
+                    <button class="nav-sub-item" :class="{ active: page === 'agente-predio' }" @click="goTo('agente-predio')">Prédio Completo</button>
+                </div>
+            </div>
         </nav>
     </aside>
 
@@ -951,6 +976,196 @@
                 </div>
             </div>
 
+            <!-- ========== SIMULAÇÃO DE PRÉDIO COMPLETO ========== -->
+            <div v-if="page === 'agente-predio'">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">Simular Prédio Completo</h2>
+                        <p class="page-subtitle">Monitora inatividade de todos os computadores de um prédio simultaneamente</p>
+                    </div>
+                </div>
+
+                <!-- Seleção do prédio -->
+                <div class="form-card">
+                    <div class="form-card-header form-card-header-teal">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 22V4a2 2 0 012-2h8a2 2 0 012 2v18Z"/>
+                            <path d="M6 12H4a2 2 0 00-2 2v6a2 2 0 002 2h2"/>
+                            <path d="M18 9h2a2 2 0 012 2v9a2 2 0 01-2 2h-2"/>
+                            <path d="M10 6h4M10 10h4M10 14h4M10 18h4"/>
+                        </svg>
+                        <span>Selecionar Prédio</span>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="form-label">Prédio</label>
+                            <select v-model="simPredioId" class="form-select" :disabled="simRodando" @change="simComputadores = []">
+                                <option disabled value="">Selecione um prédio...</option>
+                                <option v-for="p in predios" :key="p.id" :value="p.id">{{ p.nome }}</option>
+                            </select>
+                        </div>
+                        <div class="form-actions" style="border-top:none;padding-top:0">
+                            <button class="btn-outline" @click="carregarSimPredio" :disabled="!simPredioId || simRodando">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 2H3v16h5v4l4-4h4l5-5V2z"/>
+                                    <line x1="9" y1="9" x2="9" y2="9"/><line x1="12" y1="9" x2="12" y2="9"/><line x1="15" y1="9" x2="15" y2="9"/>
+                                </svg>
+                                Carregar Computadores
+                            </button>
+                            <button v-if="!simRodando" class="btn-primary btn-teal" @click="iniciarSimPredio" :disabled="simComputadores.length === 0">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="5 3 19 12 5 21 5 3"/>
+                                </svg>
+                                Iniciar Simulação
+                            </button>
+                            <button v-else class="btn-delete" style="flex:0 0 auto" @click="pararSimPredio">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="6" y="6" width="12" height="12"/>
+                                </svg>
+                                Parar Simulação
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela de computadores -->
+                <div v-if="simCarregando" class="loading-text mt-1">Carregando computadores...</div>
+                <div v-else-if="simComputadores.length > 0" class="form-card mt-1">
+                    <div style="padding:0.875rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+                        <span style="font-size:0.875rem;color:var(--text-secondary)">{{ simComputadores.length }} computador(es) carregado(s)</span>
+                        <span v-if="simRodando" style="font-size:0.8rem;font-weight:600;color:var(--teal)">● Simulação em andamento — {{ simSegundo }}s</span>
+                    </div>
+                    <div style="overflow-x:auto">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.875rem">
+                            <thead>
+                                <tr style="background:var(--surface-2)">
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Patrimônio</th>
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Laboratório</th>
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Status</th>
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Tempo Ocioso</th>
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Limite</th>
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Progresso</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="c in simComputadores" :key="c.id" style="border-top:1px solid var(--border)">
+                                    <td style="padding:0.75rem 1rem;font-weight:600">{{ c.patrimonio }}</td>
+                                    <td style="padding:0.75rem 1rem;color:var(--text-secondary)">{{ c.laboratorioNome }}</td>
+                                    <td style="padding:0.75rem 1rem">
+                                        <span :style="simStatusStyle(c.status)" style="padding:0.2rem 0.6rem;border-radius:999px;font-size:0.75rem;font-weight:600">
+                                            {{ c.status }}
+                                        </span>
+                                    </td>
+                                    <td style="padding:0.75rem 1rem;font-variant-numeric:tabular-nums">
+                                        <span :style="c.status === 'DESLIGADO' ? 'color:var(--text-secondary)' : ''">{{ c.segundosOcioso }}s</span>
+                                    </td>
+                                    <td style="padding:0.75rem 1rem;color:var(--text-secondary)">{{ c.tempoLimite }}s</td>
+                                    <td style="padding:0.75rem 1rem;min-width:120px">
+                                        <div v-if="c.status !== 'DESLIGADO'" style="background:var(--border);border-radius:999px;height:6px;overflow:hidden">
+                                            <div :style="simBarraStyle(c)" style="height:100%;border-radius:999px;transition:width 0.8s linear"></div>
+                                        </div>
+                                        <span v-else style="font-size:0.75rem;color:var(--text-secondary)">desligado</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <p v-else-if="simPredioId && !simCarregando" class="empty-text">Clique em "Carregar Computadores" para listar os PCs do prédio.</p>
+            </div>
+
+            <!-- ========== HISTÓRICO DE DESLIGAMENTOS ========== -->
+            <div v-if="page === 'historico-lista'">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">Histórico de Desligamentos</h2>
+                        <p class="page-subtitle">Consulte todos os desligamentos registrados pelo sistema</p>
+                    </div>
+                </div>
+
+                <!-- Filtros -->
+                <div class="form-card" style="margin-bottom:1.25rem">
+                    <div class="form-card-header form-card-header-blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                        </svg>
+                        <span>Filtros</span>
+                    </div>
+                    <div class="form-body">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem">
+                            <div class="form-group">
+                                <label class="form-label">Motivo</label>
+                                <select v-model="historicoFiltros.motivo" class="form-select">
+                                    <option value="">Todos</option>
+                                    <option value="INATIVIDADE">Inatividade</option>
+                                    <option value="HORARIO_FIXO">Horário Fixo</option>
+                                    <option value="MANUAL">Manual</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Laboratório</label>
+                                <input v-model="historicoFiltros.laboratorio" type="text" class="form-input" placeholder="Nome do laboratório">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Patrimônio</label>
+                                <input v-model="historicoFiltros.patrimonio" type="text" class="form-input" placeholder="Código do patrimônio">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data início</label>
+                                <input v-model="historicoFiltros.dataInicio" type="datetime-local" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data fim</label>
+                                <input v-model="historicoFiltros.dataFim" type="datetime-local" class="form-input">
+                            </div>
+                        </div>
+                        <div class="form-actions" style="margin-top:0.75rem">
+                            <button class="btn-outline" @click="historicoFiltros = { motivo: '', dataInicio: '', dataFim: '', laboratorio: '', patrimonio: '' }; carregarHistorico()">Limpar</button>
+                            <button class="btn-primary btn-blue" @click="carregarHistorico">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                                </svg>
+                                Buscar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <p v-if="carregandoHistorico" class="loading-text">Carregando...</p>
+                <p v-else-if="historico.length === 0" class="empty-text">Nenhum registro encontrado com os filtros aplicados.</p>
+                <div v-else class="form-card">
+                    <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--text-secondary)">
+                        {{ historico.length }} registro(s) encontrado(s)
+                    </div>
+                    <div style="overflow-x:auto">
+                        <table style="width:100%;border-collapse:collapse;font-size:0.875rem">
+                            <thead>
+                                <tr style="background:var(--surface-2)">
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600;white-space:nowrap">Data / Hora</th>
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Patrimônio</th>
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Laboratório</th>
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Prédio</th>
+                                    <th style="padding:0.75rem 1rem;text-align:left;color:var(--text-secondary);font-weight:600">Motivo</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="h in historico" :key="h.id" style="border-top:1px solid var(--border)">
+                                    <td style="padding:0.75rem 1rem;white-space:nowrap;color:var(--text-secondary)">{{ formatarDataHora(h.dataHora) }}</td>
+                                    <td style="padding:0.75rem 1rem;font-weight:600">{{ h.patrimonio }}</td>
+                                    <td style="padding:0.75rem 1rem">{{ h.laboratorioNome }}</td>
+                                    <td style="padding:0.75rem 1rem">{{ h.predioNome }}</td>
+                                    <td style="padding:0.75rem 1rem">
+                                        <span :style="motivoStyle(h.motivo)" style="padding:0.2rem 0.6rem;border-radius:999px;font-size:0.75rem;font-weight:600">
+                                            {{ motivoLabel(h.motivo) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -1011,7 +1226,7 @@ createApp({
     data() {
         return {
             page: 'dashboard',
-            sections: { predios: false, labs: false, pcs: false, politicas: false },
+            sections: { predios: false, labs: false, pcs: false, politicas: false, historico: false, agente: false },
 
             // AUTENTICAÇÃO
             gestorLogado: false,
@@ -1055,6 +1270,19 @@ createApp({
             politicaForm: { laboratorioId: '', horarioLigamento: '', horarioDesligamento: '' },
             politicaErro: '',
             politicaSucesso: '',
+
+            // HISTÓRICO
+            historico: [],
+            carregandoHistorico: false,
+            historicoFiltros: { motivo: '', dataInicio: '', dataFim: '', laboratorio: '', patrimonio: '' },
+
+            // SIMULAÇÃO DE PRÉDIO COMPLETO
+            simPredioId: '',
+            simComputadores: [],
+            simCarregando: false,
+            simRodando: false,
+            simIntervalId: null,
+            simSegundo: 0,
 
             // AGENTE
             agentePcId: '',
@@ -1114,9 +1342,12 @@ createApp({
                 return;
             }
 
-            if (p.startsWith('predios')) this.sections.predios = true;
-            if (p.startsWith('labs'))    this.sections.labs    = true;
-            if (p.startsWith('pcs'))     this.sections.pcs     = true;
+            if (p.startsWith('predios'))   this.sections.predios  = true;
+            if (p.startsWith('labs'))      this.sections.labs     = true;
+            if (p.startsWith('pcs'))       this.sections.pcs      = true;
+            if (p.startsWith('historico')) this.sections.historico = true;
+            if (p === 'agente' || p === 'agente-predio') this.sections.agente = true;
+            if (p === 'historico-lista')   this.carregarHistorico();
 
             if (p === 'predios-novo') {
                 this.predioEdicao = null;
@@ -1481,7 +1712,7 @@ createApp({
             this.pararAgente();
             this.adicionarLog('[SISTEMA] Comando enviado: shutdown /s /t 0');
             try {
-                await axios.put(`/computadores/${this.agentePcId}/status`, { status: 'DESLIGADO' });
+                await axios.put(`/computadores/${this.agentePcId}/status`, { status: 'DESLIGADO', motivo: 'INATIVIDADE' });
                 this.adicionarLog('Simulação concluída — PC marcado como DESLIGADO no banco.');
                 await this.carregarPcs();
                 if (this.agentePcDados) this.agentePcDados.status = 'DESLIGADO';
@@ -1502,6 +1733,144 @@ createApp({
                 this.adicionarLog('[SISTEMA] Monitoramento ' + motivo + '.');
             }
             this.agenteRodando = false;
+        },
+
+        // ========== SIMULAÇÃO DE PRÉDIO COMPLETO ==========
+        async carregarSimPredio() {
+            if (!this.simPredioId) return;
+            this.simCarregando = true;
+            this.simComputadores = [];
+            try {
+                // Busca todos os labs do prédio
+                const labsRes = await axios.get('/laboratorios');
+                const labsDoPredio = labsRes.data.filter(l => l.predioId == this.simPredioId);
+
+                const lista = [];
+                for (const lab of labsDoPredio) {
+                    // Busca computadores do lab (filtrando da lista geral)
+                    const pcsDoLab = this.pcs.filter(pc => pc.laboratorioId === lab.id);
+                    for (const pc of pcsDoLab) {
+                        lista.push({
+                            id: pc.id,
+                            patrimonio: pc.patrimonio,
+                            laboratorioId: lab.id,
+                            laboratorioNome: lab.nome,
+                            tempoLimite: lab.tempoOciosoGlobal,
+                            segundosOcioso: 0,
+                            status: pc.status,
+                            desligado: pc.status === 'DESLIGADO',
+                        });
+                    }
+                }
+                this.simComputadores = lista;
+            } catch(e) {
+                console.error('Erro ao carregar computadores do prédio:', e);
+            } finally {
+                this.simCarregando = false;
+            }
+        },
+
+        async iniciarSimPredio() {
+            if (this.simComputadores.length === 0) return;
+            this.simRodando = true;
+            this.simSegundo = 0;
+
+            // Marca todos os LIGADOS/INATIVOS como LIGADO no banco
+            for (const c of this.simComputadores) {
+                if (!c.desligado) {
+                    c.segundosOcioso = 0;
+                    c.status = 'LIGADO';
+                    try { await axios.put(`/computadores/${c.id}/status`, { status: 'LIGADO' }); } catch {}
+                }
+            }
+
+            this.simIntervalId = setInterval(() => this.tickSimPredio(), 1000);
+        },
+
+        async tickSimPredio() {
+            this.simSegundo++;
+            let todosDesligados = true;
+
+            for (const c of this.simComputadores) {
+                if (c.desligado) continue;
+                todosDesligados = false;
+                c.segundosOcioso++;
+
+                if (c.segundosOcioso === 1) {
+                    c.status = 'INATIVO';
+                    try { await axios.put(`/computadores/${c.id}/status`, { status: 'INATIVO' }); } catch {}
+                }
+
+                if (c.segundosOcioso >= c.tempoLimite) {
+                    c.status = 'DESLIGADO';
+                    c.desligado = true;
+                    try {
+                        await axios.put(`/computadores/${c.id}/status`, { status: 'DESLIGADO', motivo: 'INATIVIDADE' });
+                    } catch {}
+                }
+            }
+
+            if (todosDesligados) {
+                this.pararSimPredio();
+                await this.carregarPcs();
+            }
+        },
+
+        pararSimPredio() {
+            if (this.simIntervalId) {
+                clearInterval(this.simIntervalId);
+                this.simIntervalId = null;
+            }
+            this.simRodando = false;
+        },
+
+        simStatusStyle(status) {
+            if (status === 'LIGADO')    return 'background:rgba(34,197,94,0.15);color:#4ade80';
+            if (status === 'INATIVO')   return 'background:rgba(139,92,246,0.15);color:#a78bfa';
+            if (status === 'DESLIGADO') return 'background:rgba(239,68,68,0.15);color:#f87171';
+            return '';
+        },
+
+        simBarraStyle(c) {
+            const pct = Math.min(100, Math.round((c.segundosOcioso / c.tempoLimite) * 100));
+            const cor = pct < 50 ? '#4ade80' : pct < 80 ? '#facc15' : '#f87171';
+            return `width:${pct}%;background:${cor}`;
+        },
+
+        async carregarHistorico() {
+            this.carregandoHistorico = true;
+            try {
+                const params = {};
+                if (this.historicoFiltros.motivo)      params.motivo     = this.historicoFiltros.motivo;
+                if (this.historicoFiltros.laboratorio) params.laboratorio = this.historicoFiltros.laboratorio;
+                if (this.historicoFiltros.patrimonio)  params.patrimonio  = this.historicoFiltros.patrimonio;
+                if (this.historicoFiltros.dataInicio)  params.dataInicio  = this.historicoFiltros.dataInicio + ':00';
+                if (this.historicoFiltros.dataFim)     params.dataFim     = this.historicoFiltros.dataFim     + ':00';
+                const res = await axios.get('/historico-desligamento', { params });
+                this.historico = res.data;
+            } catch(e) {
+                console.error('Erro ao carregar histórico:', e);
+            } finally {
+                this.carregandoHistorico = false;
+            }
+        },
+
+        formatarDataHora(iso) {
+            if (!iso) return '';
+            const d = new Date(iso);
+            return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        },
+
+        motivoLabel(motivo) {
+            const map = { INATIVIDADE: 'Inatividade', HORARIO_FIXO: 'Horário Fixo', MANUAL: 'Manual' };
+            return map[motivo] || motivo;
+        },
+
+        motivoStyle(motivo) {
+            if (motivo === 'INATIVIDADE')  return 'background:rgba(139,92,246,0.15);color:#a78bfa';
+            if (motivo === 'HORARIO_FIXO') return 'background:rgba(6,182,212,0.15);color:#22d3ee';
+            if (motivo === 'MANUAL')       return 'background:rgba(239,68,68,0.15);color:#f87171';
+            return '';
         },
 
         extrairErro(error) {
