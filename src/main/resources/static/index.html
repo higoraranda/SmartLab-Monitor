@@ -659,7 +659,7 @@
                 <div class="page-header">
                     <div>
                         <h2 class="page-title">Políticas Cadastradas</h2>
-                        <p class="page-subtitle">Horários de ligamento e desligamento automático por laboratório</p>
+                        <p class="page-subtitle">Políticas de inatividade e horários fixos de início e desligamento por laboratório</p>
                     </div>
                     <button class="btn-primary btn-purple" @click="goTo('politicas-novo')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
@@ -669,21 +669,57 @@
                     </button>
                 </div>
 
+                <!-- Políticas de Inatividade -->
                 <div class="form-card">
                     <div class="form-card-header form-card-header-purple">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                         </svg>
-                        <span>Políticas de Horário ({{ politicas.length }})</span>
+                        <span>Políticas de Inatividade ({{ labs.length }})</span>
                     </div>
                     <div style="overflow-x:auto">
-                        <p v-if="politicas.length === 0" class="empty-text">Nenhuma política cadastrada.</p>
+                        <p v-if="labs.length === 0" class="empty-text">Nenhum laboratório cadastrado.</p>
                         <table v-else class="data-table">
                             <thead>
                                 <tr>
                                     <th>Laboratório</th>
                                     <th>Prédio</th>
-                                    <th>Ligar às</th>
+                                    <th>Tempo de Inatividade</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="l in labs" :key="l.id">
+                                    <td><strong>{{ l.nome }}</strong></td>
+                                    <td>{{ l.predioNome }}</td>
+                                    <td><span class="patrimonio-badge">{{ l.tempoOciosoGlobal }}s</span></td>
+                                    <td>
+                                        <button class="btn-outline" style="padding:0.3rem 0.75rem;font-size:0.8rem" @click="editarInatividade(l)">Configurar</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Políticas de Horário Fixo -->
+                <div class="form-card mt-1">
+                    <div class="form-card-header form-card-header-purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        <span>Políticas de Horário Fixo ({{ politicas.length }})</span>
+                    </div>
+                    <div style="overflow-x:auto">
+                        <p v-if="politicas.length === 0" class="empty-text">Nenhuma política de horário cadastrada.</p>
+                        <table v-else class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Laboratório</th>
+                                    <th>Prédio</th>
+                                    <th>Início às</th>
                                     <th>Desligar às</th>
                                     <th>Ações</th>
                                 </tr>
@@ -715,7 +751,7 @@
                 <div class="page-header">
                     <div>
                         <h2 class="page-title">{{ politicaEdicao ? 'Editar Política' : 'Cadastrar Política' }}</h2>
-                        <p class="page-subtitle">Defina o laboratório e os horários de ligamento e desligamento</p>
+                        <p class="page-subtitle">Defina o laboratório e os horários de início e desligamento</p>
                     </div>
                 </div>
 
@@ -737,9 +773,9 @@
 
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
                             <div class="form-group">
-                                <label class="form-label">Horário de Ligamento (HH:mm) <span class="required">*</span></label>
+                                <label class="form-label">Horário de Início (HH:mm) <span class="required">*</span></label>
                                 <input v-model="politicaForm.horarioLigamento" type="time" class="form-input">
-                                <p style="font-size:0.78rem;color:var(--teal);margin-top:0.25rem">A ligação é feita manualmente — este horário serve como referência.</p>
+                                <p style="font-size:0.78rem;color:var(--teal);margin-top:0.25rem">O início é feito manualmente — este horário serve como referência.</p>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Horário de Desligamento (HH:mm) <span class="required">*</span></label>
@@ -852,7 +888,7 @@
                                 <span v-if="agentePoliticas.length === 0">Nenhuma política cadastrada para este laboratório.</span>
                                 <span v-else>
                                     <span v-for="p in agentePoliticas" :key="p.id" style="margin-right:0.5rem">
-                                        <span class="patrimonio-badge" style="background:rgba(6,182,212,0.12);color:var(--teal)">liga {{ p.horarioLigamento }}</span>
+                                        <span class="patrimonio-badge" style="background:rgba(6,182,212,0.12);color:var(--teal)">início {{ p.horarioLigamento }}</span>
                                         <span class="patrimonio-badge" style="background:rgba(139,92,246,0.12);color:var(--purple);margin-left:0.25rem">desliga {{ p.horarioDesligamento }}</span>
                                     </span>
                                 </span>
@@ -1195,6 +1231,13 @@ createApp({
         },
 
         // ========== INATIVIDADE ==========
+        editarInatividade(lab) {
+            this.inatividadeLabId     = lab.id;
+            this.inatividadeLabDados  = lab;
+            this.inatividadeNovoTempo = lab.tempoOciosoGlobal;
+            this.inatividadeErro      = ''; this.inatividadeSucesso = '';
+            this.page = 'politicas-inatividade';
+        },
         async carregarInatividade() {
             this.inatividadeErro = ''; this.inatividadeSucesso = '';
             if (!this.inatividadeLabId) { this.inatividadeLabDados = null; return; }
