@@ -14,9 +14,7 @@ public class LaboratorioMapper {
                 lab.getPredio().getId(),
                 lab.getPredio().getNome(),
                 lab.getComputadores().size(),
-                lab.getTempoOciosoGlobal(),
-                lab.getHorariosFixos(),
-                lab.getHorariosLigamento()
+                lab.getTempoOciosoGlobal()
         );
     }
 }

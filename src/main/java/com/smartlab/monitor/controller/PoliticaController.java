@@ -1,6 +1,5 @@
 package com.smartlab.monitor.controller;
 
-import com.smartlab.monitor.dto.HorarioRequest;
 import com.smartlab.monitor.dto.InatividadeRequest;
 import com.smartlab.monitor.dto.LaboratorioResponse;
 import com.smartlab.monitor.service.PoliticaService;
@@ -11,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/politicas")
-@Tag(name = "Políticas", description = "Gerenciamento de políticas de inatividade e horário fixo")
+@Tag(name = "Políticas", description = "Gerenciamento de tempo de inatividade por laboratório")
 public class PoliticaController {
 
     private final PoliticaService politicaService;
@@ -26,33 +25,5 @@ public class PoliticaController {
             @PathVariable Long labId,
             @Valid @RequestBody InatividadeRequest request) {
         return politicaService.definirInatividade(labId, request.tempoOciosoGlobal());
-    }
-
-    @PostMapping("/{labId}/horarios")
-    @Operation(summary = "Adiciona um horário fixo de desligamento ao laboratório (formato HH:mm)")
-    public LaboratorioResponse adicionarHorario(
-            @PathVariable Long labId,
-            @Valid @RequestBody HorarioRequest request) {
-        return politicaService.adicionarHorario(labId, request.horario());
-    }
-
-    @DeleteMapping("/{labId}/horarios")
-    @Operation(summary = "Remove todos os horários fixos de desligamento do laboratório")
-    public LaboratorioResponse limparHorarios(@PathVariable Long labId) {
-        return politicaService.limparHorarios(labId);
-    }
-
-    @PostMapping("/{labId}/horarios-ligamento")
-    @Operation(summary = "Adiciona um horário de ligamento ao laboratório (formato HH:mm)")
-    public LaboratorioResponse adicionarHorarioLigamento(
-            @PathVariable Long labId,
-            @Valid @RequestBody HorarioRequest request) {
-        return politicaService.adicionarHorarioLigamento(labId, request.horario());
-    }
-
-    @DeleteMapping("/{labId}/horarios-ligamento")
-    @Operation(summary = "Remove todos os horários de ligamento do laboratório")
-    public LaboratorioResponse limparHorariosLigamento(@PathVariable Long labId) {
-        return politicaService.limparHorariosLigamento(labId);
     }
 }

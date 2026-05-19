@@ -93,12 +93,21 @@
             </div>
 
             <!-- Políticas -->
-            <button class="nav-item" :class="{ active: page === 'politicas' }" @click="goTo('politicas')">
-                <svg class="nav-icon nav-icon-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
-                Políticas
-            </button>
+            <div class="nav-section">
+                <button class="nav-section-btn" :class="{ 'section-active': page.startsWith('politicas') }" @click="toggleSection('politicas')">
+                    <svg class="nav-icon nav-icon-purple" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span>Políticas</span>
+                    <svg class="nav-chevron" :class="{ 'chevron-open': sections.politicas }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                </button>
+                <div class="nav-sub" v-show="sections.politicas">
+                    <button class="nav-sub-item" :class="{ active: page === 'politicas-novo' || page === 'politicas-editar' }" @click="goTo('politicas-novo')">Cadastrar Política</button>
+                    <button class="nav-sub-item" :class="{ active: page === 'politicas-lista' }" @click="goTo('politicas-lista')">Políticas Cadastradas</button>
+                </div>
+            </div>
 
             <!-- Simular Agente -->
             <button class="nav-item" :class="{ active: page === 'agente' }" @click="goTo('agente')">
@@ -644,124 +653,110 @@
                 <div v-if="pcSucesso" class="alert-success mt-1">{{ pcSucesso }}</div>
             </div>
 
-            <!-- ========== POLÍTICAS ========== -->
-            <div v-if="page === 'politicas'">
+            <!-- ========== POLÍTICAS — LISTA ========== -->
+            <div v-if="page === 'politicas-lista'">
                 <div class="page-header">
                     <div>
-                        <h2 class="page-title">Políticas de Laboratório</h2>
-                        <p class="page-subtitle">Defina inatividade e horários fixos de desligamento</p>
+                        <h2 class="page-title">Políticas Cadastradas</h2>
+                        <p class="page-subtitle">Horários de ligamento e desligamento automático por laboratório</p>
+                    </div>
+                    <button class="btn-primary btn-purple" @click="goTo('politicas-novo')">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px">
+                            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                        </svg>
+                        Nova Política
+                    </button>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-header form-card-header-purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>Políticas de Horário ({{ politicas.length }})</span>
+                    </div>
+                    <div style="overflow-x:auto">
+                        <p v-if="politicas.length === 0" class="empty-text">Nenhuma política cadastrada.</p>
+                        <table v-else class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Laboratório</th>
+                                    <th>Prédio</th>
+                                    <th>Ligar às</th>
+                                    <th>Desligar às</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="p in politicas" :key="p.id">
+                                    <td><strong>{{ p.laboratorioNome }}</strong></td>
+                                    <td>{{ p.predioNome }}</td>
+                                    <td><span class="patrimonio-badge" style="background:rgba(6,182,212,0.12);color:var(--teal)">{{ p.horarioLigamento }}</span></td>
+                                    <td><span class="patrimonio-badge" style="background:rgba(139,92,246,0.12);color:var(--purple)">{{ p.horarioDesligamento }}</span></td>
+                                    <td>
+                                        <div style="display:flex;gap:0.5rem">
+                                            <button class="btn-outline" style="padding:0.3rem 0.75rem;font-size:0.8rem" @click="editarPolitica(p)">Editar</button>
+                                            <button class="btn-delete" style="padding:0.3rem 0.75rem;font-size:0.8rem" @click="removerPolitica(p.id)">Remover</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div v-if="politicaErro" class="alert-error mt-1">{{ politicaErro }}</div>
+                <div v-if="politicaSucesso" class="alert-success mt-1">{{ politicaSucesso }}</div>
+            </div>
+
+            <!-- ========== POLÍTICAS — CADASTRAR / EDITAR ========== -->
+            <div v-if="page === 'politicas-novo' || page === 'politicas-editar'">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">{{ politicaEdicao ? 'Editar Política' : 'Cadastrar Política' }}</h2>
+                        <p class="page-subtitle">Defina o laboratório e os horários de ligamento e desligamento</p>
                     </div>
                 </div>
 
                 <div class="form-card">
                     <div class="form-card-header form-card-header-purple">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.55a1 1 0 00.9 1.45h12.76a1 1 0 00.9-1.45l-5.069-10.127A2 2 0 0114 9.527V2"/>
-                            <path d="M8.5 2h7"/><path d="M7 16h10"/>
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                         </svg>
-                        <span>Selecionar Laboratório</span>
+                        <span>{{ politicaEdicao ? 'Editar Política #' + politicaEdicao : 'Nova Política de Horário' }}</span>
                     </div>
                     <div class="form-body">
                         <div class="form-group">
-                            <label class="form-label">Laboratório</label>
-                            <select v-model="politicaLabId" class="form-select" @change="carregarPoliticasLab">
+                            <label class="form-label">Laboratório <span class="required">*</span></label>
+                            <select v-model="politicaForm.laboratorioId" class="form-select">
                                 <option disabled value="">Selecione um laboratório...</option>
                                 <option v-for="l in labs" :key="l.id" :value="l.id">{{ l.nome }} — {{ l.predioNome }}</option>
                             </select>
                         </div>
-                    </div>
-                </div>
 
-                <div v-if="politicaLabDados">
-                    <!-- Tempo de Inatividade -->
-                    <div class="form-card mt-1">
-                        <div class="form-card-header form-card-header-purple">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                            </svg>
-                            <span>Tempo de Inatividade — atual: {{ politicaLabDados.tempoOciosoGlobal }}s</span>
-                        </div>
-                        <div class="form-body">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
                             <div class="form-group">
-                                <label class="form-label">Novo tempo limite (em segundos, mínimo 10) <span class="required">*</span></label>
-                                <input v-model.number="politicaNovoTempo" type="number" min="10" class="form-input" placeholder="Ex: 300">
+                                <label class="form-label">Horário de Ligamento (HH:mm) <span class="required">*</span></label>
+                                <input v-model="politicaForm.horarioLigamento" type="time" class="form-input">
+                                <p style="font-size:0.78rem;color:var(--teal);margin-top:0.25rem">A ligação é feita manualmente — este horário serve como referência.</p>
                             </div>
-                            <div class="form-actions">
-                                <button class="btn-primary btn-purple" @click="salvarInatividade">Salvar Inatividade</button>
+                            <div class="form-group">
+                                <label class="form-label">Horário de Desligamento (HH:mm) <span class="required">*</span></label>
+                                <input v-model="politicaForm.horarioDesligamento" type="time" class="form-input">
+                                <p style="font-size:0.78rem;color:var(--purple);margin-top:0.25rem">O servidor desligará automaticamente todos os PCs do laboratório neste horário.</p>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- Horários Fixos de Desligamento -->
-                    <div class="form-card mt-1">
-                        <div class="form-card-header form-card-header-purple">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
-                                <line x1="3" y1="10" x2="21" y2="10"/>
-                            </svg>
-                            <span>Horários Fixos de Desligamento</span>
-                        </div>
-                        <div class="form-body">
-                            <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.75rem">
-                                O servidor verifica automaticamente a cada minuto e desliga todos os computadores ativos nos horários cadastrados.
-                            </p>
-                            <div class="form-group">
-                                <label class="form-label">Horários cadastrados</label>
-                                <p v-if="politicaLabDados.horariosFixos.length === 0" class="empty-text" style="padding:0.5rem 0;text-align:left">Nenhum horário cadastrado.</p>
-                                <ul v-else style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0.5rem">
-                                    <li v-for="h in politicaLabDados.horariosFixos" :key="h" class="patrimonio-badge">{{ h }}</li>
-                                </ul>
-                            </div>
+                        <div v-if="politicaErro" class="alert-error" style="margin-top:0.5rem">{{ politicaErro }}</div>
+                        <div v-if="politicaSucesso" class="alert-success" style="margin-top:0.5rem">{{ politicaSucesso }}</div>
 
-                            <div class="form-group">
-                                <label class="form-label">Adicionar horário (HH:mm) <span class="required">*</span></label>
-                                <input v-model="politicaNovoHorario" type="time" class="form-input" @keyup.enter="adicionarHorarioFixo">
-                            </div>
-
-                            <div class="form-actions">
-                                <button class="btn-outline" @click="limparHorariosFixos" v-if="politicaLabDados.horariosFixos.length > 0">Limpar Todos</button>
-                                <button class="btn-primary btn-purple" @click="adicionarHorarioFixo">Adicionar Horário</button>
-                            </div>
+                        <div class="form-actions">
+                            <button class="btn-outline" @click="goTo('politicas-lista')">Cancelar</button>
+                            <button class="btn-primary btn-purple" @click="salvarPolitica">
+                                {{ politicaEdicao ? 'Salvar Alterações' : 'Cadastrar Política' }}
+                            </button>
                         </div>
                     </div>
-
-                    <!-- Horários de Ligamento -->
-                    <div class="form-card mt-1">
-                        <div class="form-card-header form-card-header-teal">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"/>
-                                <polyline points="12 8 12 12 14 14"/>
-                                <line x1="12" y1="2" x2="12" y2="4"/>
-                            </svg>
-                            <span>Horários de Ligamento</span>
-                        </div>
-                        <div class="form-body">
-                            <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.75rem">
-                                Registre os horários previstos para ligar os computadores. A ligação é feita manualmente; esses horários servem como referência para o responsável pelo laboratório.
-                            </p>
-                            <div class="form-group">
-                                <label class="form-label">Horários cadastrados</label>
-                                <p v-if="politicaLabDados.horariosLigamento.length === 0" class="empty-text" style="padding:0.5rem 0;text-align:left">Nenhum horário cadastrado.</p>
-                                <ul v-else style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0.5rem">
-                                    <li v-for="h in politicaLabDados.horariosLigamento" :key="h" class="patrimonio-badge" style="background:rgba(6,182,212,0.12);color:var(--teal)">{{ h }}</li>
-                                </ul>
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Adicionar horário (HH:mm) <span class="required">*</span></label>
-                                <input v-model="politicaNovoHorarioLigamento" type="time" class="form-input" @keyup.enter="adicionarHorarioLigamento">
-                            </div>
-
-                            <div class="form-actions">
-                                <button class="btn-outline" @click="limparHorariosLigamento" v-if="politicaLabDados.horariosLigamento.length > 0">Limpar Todos</button>
-                                <button class="btn-primary btn-teal" @click="adicionarHorarioLigamento">Adicionar Horário</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div v-if="politicaErro" class="alert-error mt-1">{{ politicaErro }}</div>
-                    <div v-if="politicaSucesso" class="alert-success mt-1">{{ politicaSucesso }}</div>
                 </div>
             </div>
 
@@ -804,10 +799,13 @@
                         </div>
                         <div class="form-body">
                             <div class="meta-item"><strong>Tempo limite de inatividade:</strong>&nbsp;{{ agenteLabDados.tempoOciosoGlobal }}s</div>
-                            <div class="meta-item"><strong>Horários fixos:</strong>&nbsp;
-                                <span v-if="agenteLabDados.horariosFixos.length === 0">Nenhum</span>
+                            <div class="meta-item"><strong>Políticas de horário (desligamento automático pelo servidor):</strong>&nbsp;
+                                <span v-if="agentePoliticas.length === 0">Nenhuma política cadastrada para este laboratório.</span>
                                 <span v-else>
-                                    <span v-for="h in agenteLabDados.horariosFixos" :key="h" class="patrimonio-badge" style="margin-right:0.25rem">{{ h }}</span>
+                                    <span v-for="p in agentePoliticas" :key="p.id" style="margin-right:0.5rem">
+                                        <span class="patrimonio-badge" style="background:rgba(6,182,212,0.12);color:var(--teal)">liga {{ p.horarioLigamento }}</span>
+                                        <span class="patrimonio-badge" style="background:rgba(139,92,246,0.12);color:var(--purple);margin-left:0.25rem">desliga {{ p.horarioDesligamento }}</span>
+                                    </span>
                                 </span>
                             </div>
                         </div>
@@ -889,7 +887,7 @@ createApp({
     data() {
         return {
             page: 'dashboard',
-            sections: { predios: false, labs: false, pcs: false },
+            sections: { predios: false, labs: false, pcs: false, politicas: false },
 
             searchPredios: '',
             searchLabs: '',
@@ -914,11 +912,9 @@ createApp({
             pcForm: { patrimonio: '', laboratorioId: '' },
 
             // POLÍTICAS
-            politicaLabId: '',
-            politicaLabDados: null,
-            politicaNovoTempo: 300,
-            politicaNovoHorario: '',
-            politicaNovoHorarioLigamento: '',
+            politicas: [],
+            politicaEdicao: null,
+            politicaForm: { laboratorioId: '', horarioLigamento: '', horarioDesligamento: '' },
             politicaErro: '',
             politicaSucesso: '',
 
@@ -926,6 +922,7 @@ createApp({
             agentePcId: '',
             agentePcDados: null,
             agenteLabDados: null,
+            agentePoliticas: [],
             agenteRodando: false,
             agenteSegundosOcioso: 0,
             agenteLogs: [],
@@ -963,6 +960,7 @@ createApp({
         this.carregarPredios();
         this.carregarLabs();
         this.carregarPcs();
+        this.carregarPoliticas();
     },
 
     methods: {
@@ -985,6 +983,14 @@ createApp({
                 this.pcEdicao = null;
                 this.pcForm   = { patrimonio: '', laboratorioId: '' };
                 this.pcErro   = ''; this.pcSucesso = '';
+            }
+            if (p === 'politicas-novo') {
+                this.politicaEdicao = null;
+                this.politicaForm   = { laboratorioId: '', horarioLigamento: '', horarioDesligamento: '' };
+                this.politicaErro   = ''; this.politicaSucesso = '';
+            }
+            if (p === 'politicas-lista') {
+                this.politicaErro = ''; this.politicaSucesso = '';
             }
 
             this.page = p;
@@ -1133,72 +1139,56 @@ createApp({
         },
 
         // ========== POLÍTICAS ==========
-        async carregarPoliticasLab() {
+        async carregarPoliticas() {
+            try { this.politicas = (await axios.get('/politicas-horario')).data; }
+            catch { this.politicaErro = 'Erro ao carregar políticas.'; }
+        },
+        editarPolitica(p) {
+            this.politicaEdicao = p.id;
+            this.politicaForm   = { laboratorioId: p.laboratorioId, horarioLigamento: p.horarioLigamento, horarioDesligamento: p.horarioDesligamento };
+            this.politicaErro   = ''; this.politicaSucesso = '';
+            this.page = 'politicas-editar';
+        },
+        async salvarPolitica() {
             this.politicaErro = ''; this.politicaSucesso = '';
-            if (!this.politicaLabId) { this.politicaLabDados = null; return; }
+            if (!this.politicaForm.laboratorioId || !this.politicaForm.horarioLigamento || !this.politicaForm.horarioDesligamento) {
+                this.politicaErro = 'Preencha todos os campos obrigatórios.'; return;
+            }
             try {
-                const res = await axios.get(`/laboratorios/${this.politicaLabId}`);
-                this.politicaLabDados = res.data;
-                this.politicaNovoTempo = res.data.tempoOciosoGlobal;
+                if (this.politicaEdicao) {
+                    await axios.put(`/politicas-horario/${this.politicaEdicao}`, this.politicaForm);
+                    this.politicaSucesso = 'Política atualizada com sucesso.';
+                } else {
+                    await axios.post('/politicas-horario', this.politicaForm);
+                    this.politicaSucesso = 'Política cadastrada com sucesso.';
+                }
+                this.politicaEdicao = null;
+                this.politicaForm   = { laboratorioId: '', horarioLigamento: '', horarioDesligamento: '' };
+                await this.carregarPoliticas();
+                setTimeout(() => this.goTo('politicas-lista'), 900);
             } catch(e) { this.politicaErro = this.extrairErro(e); }
         },
-        async salvarInatividade() {
+        async removerPolitica(id) {
+            if (!confirm('Remover esta política de horário?')) return;
             this.politicaErro = ''; this.politicaSucesso = '';
             try {
-                const res = await axios.put(`/politicas/${this.politicaLabId}/inatividade`,
-                    { tempoOciosoGlobal: this.politicaNovoTempo });
-                this.politicaLabDados = res.data;
-                this.politicaSucesso = 'Tempo de inatividade atualizado com sucesso.';
-            } catch(e) { this.politicaErro = this.extrairErro(e); }
-        },
-        async adicionarHorarioFixo() {
-            this.politicaErro = ''; this.politicaSucesso = '';
-            try {
-                const res = await axios.post(`/politicas/${this.politicaLabId}/horarios`,
-                    { horario: this.politicaNovoHorario });
-                this.politicaLabDados = res.data;
-                this.politicaNovoHorario = '';
-                this.politicaSucesso = 'Horário adicionado com sucesso.';
-            } catch(e) { this.politicaErro = this.extrairErro(e); }
-        },
-        async limparHorariosFixos() {
-            if (!confirm('Remover todos os horários fixos de desligamento deste laboratório?')) return;
-            this.politicaErro = ''; this.politicaSucesso = '';
-            try {
-                const res = await axios.delete(`/politicas/${this.politicaLabId}/horarios`);
-                this.politicaLabDados = res.data;
-                this.politicaSucesso = 'Horários de desligamento removidos com sucesso.';
-            } catch(e) { this.politicaErro = this.extrairErro(e); }
-        },
-        async adicionarHorarioLigamento() {
-            this.politicaErro = ''; this.politicaSucesso = '';
-            try {
-                const res = await axios.post(`/politicas/${this.politicaLabId}/horarios-ligamento`,
-                    { horario: this.politicaNovoHorarioLigamento });
-                this.politicaLabDados = res.data;
-                this.politicaNovoHorarioLigamento = '';
-                this.politicaSucesso = 'Horário de ligamento adicionado com sucesso.';
-            } catch(e) { this.politicaErro = this.extrairErro(e); }
-        },
-        async limparHorariosLigamento() {
-            if (!confirm('Remover todos os horários de ligamento deste laboratório?')) return;
-            this.politicaErro = ''; this.politicaSucesso = '';
-            try {
-                const res = await axios.delete(`/politicas/${this.politicaLabId}/horarios-ligamento`);
-                this.politicaLabDados = res.data;
-                this.politicaSucesso = 'Horários de ligamento removidos com sucesso.';
+                await axios.delete(`/politicas-horario/${id}`);
+                this.politicaSucesso = 'Política removida com sucesso.';
+                await this.carregarPoliticas();
             } catch(e) { this.politicaErro = this.extrairErro(e); }
         },
 
         // ========== AGENTE LOCAL (SIMULAÇÃO) ==========
         async carregarAgentePc() {
-            this.agentePcDados = null; this.agenteLabDados = null; this.agenteLogs = [];
+            this.agentePcDados = null; this.agenteLabDados = null; this.agentePoliticas = []; this.agenteLogs = [];
             if (!this.agentePcId) return;
             try {
                 const pcRes  = await axios.get(`/computadores/${this.agentePcId}`);
                 this.agentePcDados = pcRes.data;
                 const labRes = await axios.get(`/laboratorios/${this.agentePcDados.laboratorioId}`);
                 this.agenteLabDados = labRes.data;
+                const polRes = await axios.get(`/politicas-horario/laboratorio/${this.agentePcDados.laboratorioId}`);
+                this.agentePoliticas = polRes.data;
             } catch(e) { this.pcErro = this.extrairErro(e); }
         },
         adicionarLog(msg) {
@@ -1235,17 +1225,9 @@ createApp({
         tickAgente() {
             const now = new Date();
             const pad = (n) => n.toString().padStart(2, '0');
-            const horaAtual   = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-            const horaSimples = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+            const horaAtual = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
 
-            // 1) Horário fixo
-            if (this.agenteLabDados.horariosFixos.includes(horaSimples)) {
-                this.adicionarLog(`\n[!] POLÍTICA DE HORÁRIO ATINGIDA (${horaSimples}).`);
-                this.dispararDesligamento();
-                return;
-            }
-
-            // 2) Ociosidade do mouse
+            // Ociosidade do mouse
             if (this.agenteMouseMoveu) {
                 if (this.agenteSegundosOcioso > 0) {
                     this.adicionarLog(`Log [${horaAtual}] Movimento detectado! Resetando tempo...`);

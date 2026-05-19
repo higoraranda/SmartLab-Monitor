@@ -2,9 +2,10 @@ package com.smartlab.monitor.scheduler;
 
 import com.smartlab.monitor.domain.Computador;
 import com.smartlab.monitor.domain.Laboratorio;
+import com.smartlab.monitor.domain.PoliticaHorario;
 import com.smartlab.monitor.domain.StatusComputador;
 import com.smartlab.monitor.repository.ComputadorRepository;
-import com.smartlab.monitor.repository.LaboratorioRepository;
+import com.smartlab.monitor.repository.PoliticaHorarioRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,33 +23,31 @@ public class DesligamentoScheduler {
     private static final List<StatusComputador> ATIVOS =
             List.of(StatusComputador.LIGADO, StatusComputador.INATIVO);
 
-    private final LaboratorioRepository laboratorioRepository;
+    private final PoliticaHorarioRepository politicaRepository;
     private final ComputadorRepository computadorRepository;
 
-    public DesligamentoScheduler(LaboratorioRepository laboratorioRepository,
+    public DesligamentoScheduler(PoliticaHorarioRepository politicaRepository,
                                  ComputadorRepository computadorRepository) {
-        this.laboratorioRepository = laboratorioRepository;
-        this.computadorRepository  = computadorRepository;
+        this.politicaRepository = politicaRepository;
+        this.computadorRepository = computadorRepository;
     }
 
     @Scheduled(cron = "0 * * * * *")
     public void executarDesligamentosFixos() {
         String horaAtual = LocalTime.now().format(FORMATO);
-        List<Laboratorio> labs = laboratorioRepository.findAll();
+        List<PoliticaHorario> politicasAtivas = politicaRepository.findByHorarioDesligamento(horaAtual);
 
-        for (Laboratorio lab : labs) {
-            if (!lab.getHorariosFixos().contains(horaAtual)) continue;
-
-            List<Computador> ativos = computadorRepository
-                    .findByLaboratorioAndStatusIn(lab, ATIVOS);
+        for (PoliticaHorario politica : politicasAtivas) {
+            Laboratorio lab = politica.getLaboratorio();
+            List<Computador> ativos = computadorRepository.findByLaboratorioAndStatusIn(lab, ATIVOS);
 
             if (ativos.isEmpty()) continue;
 
             ativos.forEach(pc -> pc.setStatus(StatusComputador.DESLIGADO));
             computadorRepository.saveAll(ativos);
 
-            log.info("[Scheduler] {} — {} computador(es) desligado(s) às {}",
-                    lab.getNome(), ativos.size(), horaAtual);
+            log.info("[Scheduler] {} — {} computador(es) desligado(s) às {} (política #{})",
+                    lab.getNome(), ativos.size(), horaAtual, politica.getId());
         }
     }
 }
