@@ -692,7 +692,7 @@
                         </div>
                     </div>
 
-                    <!-- Horários Fixos -->
+                    <!-- Horários Fixos de Desligamento -->
                     <div class="form-card mt-1">
                         <div class="form-card-header form-card-header-purple">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -703,6 +703,9 @@
                             <span>Horários Fixos de Desligamento</span>
                         </div>
                         <div class="form-body">
+                            <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.75rem">
+                                O servidor verifica automaticamente a cada minuto e desliga todos os computadores ativos nos horários cadastrados.
+                            </p>
                             <div class="form-group">
                                 <label class="form-label">Horários cadastrados</label>
                                 <p v-if="politicaLabDados.horariosFixos.length === 0" class="empty-text" style="padding:0.5rem 0;text-align:left">Nenhum horário cadastrado.</p>
@@ -719,6 +722,40 @@
                             <div class="form-actions">
                                 <button class="btn-outline" @click="limparHorariosFixos" v-if="politicaLabDados.horariosFixos.length > 0">Limpar Todos</button>
                                 <button class="btn-primary btn-purple" @click="adicionarHorarioFixo">Adicionar Horário</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Horários de Ligamento -->
+                    <div class="form-card mt-1">
+                        <div class="form-card-header form-card-header-teal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"/>
+                                <polyline points="12 8 12 12 14 14"/>
+                                <line x1="12" y1="2" x2="12" y2="4"/>
+                            </svg>
+                            <span>Horários de Ligamento</span>
+                        </div>
+                        <div class="form-body">
+                            <p style="color:var(--text-secondary);font-size:0.875rem;margin-bottom:0.75rem">
+                                Registre os horários previstos para ligar os computadores. A ligação é feita manualmente; esses horários servem como referência para o responsável pelo laboratório.
+                            </p>
+                            <div class="form-group">
+                                <label class="form-label">Horários cadastrados</label>
+                                <p v-if="politicaLabDados.horariosLigamento.length === 0" class="empty-text" style="padding:0.5rem 0;text-align:left">Nenhum horário cadastrado.</p>
+                                <ul v-else style="list-style:none;padding:0;margin:0;display:flex;flex-wrap:wrap;gap:0.5rem">
+                                    <li v-for="h in politicaLabDados.horariosLigamento" :key="h" class="patrimonio-badge" style="background:rgba(6,182,212,0.12);color:var(--teal)">{{ h }}</li>
+                                </ul>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Adicionar horário (HH:mm) <span class="required">*</span></label>
+                                <input v-model="politicaNovoHorarioLigamento" type="time" class="form-input" @keyup.enter="adicionarHorarioLigamento">
+                            </div>
+
+                            <div class="form-actions">
+                                <button class="btn-outline" @click="limparHorariosLigamento" v-if="politicaLabDados.horariosLigamento.length > 0">Limpar Todos</button>
+                                <button class="btn-primary btn-teal" @click="adicionarHorarioLigamento">Adicionar Horário</button>
                             </div>
                         </div>
                     </div>
@@ -881,6 +918,7 @@ createApp({
             politicaLabDados: null,
             politicaNovoTempo: 300,
             politicaNovoHorario: '',
+            politicaNovoHorarioLigamento: '',
             politicaErro: '',
             politicaSucesso: '',
 
@@ -1124,12 +1162,31 @@ createApp({
             } catch(e) { this.politicaErro = this.extrairErro(e); }
         },
         async limparHorariosFixos() {
-            if (!confirm('Remover todos os horários fixos deste laboratório?')) return;
+            if (!confirm('Remover todos os horários fixos de desligamento deste laboratório?')) return;
             this.politicaErro = ''; this.politicaSucesso = '';
             try {
                 const res = await axios.delete(`/politicas/${this.politicaLabId}/horarios`);
                 this.politicaLabDados = res.data;
-                this.politicaSucesso = 'Horários removidos com sucesso.';
+                this.politicaSucesso = 'Horários de desligamento removidos com sucesso.';
+            } catch(e) { this.politicaErro = this.extrairErro(e); }
+        },
+        async adicionarHorarioLigamento() {
+            this.politicaErro = ''; this.politicaSucesso = '';
+            try {
+                const res = await axios.post(`/politicas/${this.politicaLabId}/horarios-ligamento`,
+                    { horario: this.politicaNovoHorarioLigamento });
+                this.politicaLabDados = res.data;
+                this.politicaNovoHorarioLigamento = '';
+                this.politicaSucesso = 'Horário de ligamento adicionado com sucesso.';
+            } catch(e) { this.politicaErro = this.extrairErro(e); }
+        },
+        async limparHorariosLigamento() {
+            if (!confirm('Remover todos os horários de ligamento deste laboratório?')) return;
+            this.politicaErro = ''; this.politicaSucesso = '';
+            try {
+                const res = await axios.delete(`/politicas/${this.politicaLabId}/horarios-ligamento`);
+                this.politicaLabDados = res.data;
+                this.politicaSucesso = 'Horários de ligamento removidos com sucesso.';
             } catch(e) { this.politicaErro = this.extrairErro(e); }
         },
 

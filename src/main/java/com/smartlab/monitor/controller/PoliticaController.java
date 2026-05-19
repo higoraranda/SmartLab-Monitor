@@ -37,8 +37,22 @@ public class PoliticaController {
     }
 
     @DeleteMapping("/{labId}/horarios")
-    @Operation(summary = "Remove todos os horários fixos do laboratório")
+    @Operation(summary = "Remove todos os horários fixos de desligamento do laboratório")
     public LaboratorioResponse limparHorarios(@PathVariable Long labId) {
         return politicaService.limparHorarios(labId);
+    }
+
+    @PostMapping("/{labId}/horarios-ligamento")
+    @Operation(summary = "Adiciona um horário de ligamento ao laboratório (formato HH:mm)")
+    public LaboratorioResponse adicionarHorarioLigamento(
+            @PathVariable Long labId,
+            @Valid @RequestBody HorarioRequest request) {
+        return politicaService.adicionarHorarioLigamento(labId, request.horario());
+    }
+
+    @DeleteMapping("/{labId}/horarios-ligamento")
+    @Operation(summary = "Remove todos os horários de ligamento do laboratório")
+    public LaboratorioResponse limparHorariosLigamento(@PathVariable Long labId) {
+        return politicaService.limparHorariosLigamento(labId);
     }
 }

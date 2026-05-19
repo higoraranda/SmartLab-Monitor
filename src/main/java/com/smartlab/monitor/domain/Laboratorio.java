@@ -34,6 +34,11 @@ public class Laboratorio {
     @Column(name = "horario")
     private List<String> horariosFixos = new ArrayList<>();
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "lab_horarios_ligamento", joinColumns = @JoinColumn(name = "laboratorio_id"))
+    @Column(name = "horario")
+    private List<String> horariosLigamento = new ArrayList<>();
+
     protected Laboratorio() {
         // construtor protegido para o JPA
     }
@@ -47,8 +52,9 @@ public class Laboratorio {
     public String getNome()                   { return nome; }
     public Predio getPredio()                 { return predio; }
     public List<Computador> getComputadores() { return computadores; }
-    public int getTempoOciosoGlobal()         { return tempoOciosoGlobal; }
-    public List<String> getHorariosFixos()    { return horariosFixos; }
+    public int getTempoOciosoGlobal()            { return tempoOciosoGlobal; }
+    public List<String> getHorariosFixos()       { return horariosFixos; }
+    public List<String> getHorariosLigamento()   { return horariosLigamento; }
 
     public void setTempoOciosoGlobal(int tempo) { this.tempoOciosoGlobal = tempo; }
 

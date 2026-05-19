@@ -6,4 +6,6 @@ public interface PoliticaService {
     LaboratorioResponse definirInatividade(Long labId, int tempoOciosoGlobal);
     LaboratorioResponse adicionarHorario(Long labId, String horario);
     LaboratorioResponse limparHorarios(Long labId);
+    LaboratorioResponse adicionarHorarioLigamento(Long labId, String horario);
+    LaboratorioResponse limparHorariosLigamento(Long labId);
 }

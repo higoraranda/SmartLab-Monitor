@@ -46,4 +46,21 @@ public class PoliticaServiceImpl implements PoliticaService {
         lab.getHorariosFixos().clear();
         return laboratorioMapper.toResponse(laboratorioRepository.save(lab));
     }
+
+    @Override
+    public LaboratorioResponse adicionarHorarioLigamento(Long labId, String horario) {
+        Laboratorio lab = laboratorioService.encontrarPorId(labId);
+        if (lab.getHorariosLigamento().contains(horario)) {
+            throw new IllegalArgumentException("Este horário de ligamento já está cadastrado neste laboratório.");
+        }
+        lab.getHorariosLigamento().add(horario);
+        return laboratorioMapper.toResponse(laboratorioRepository.save(lab));
+    }
+
+    @Override
+    public LaboratorioResponse limparHorariosLigamento(Long labId) {
+        Laboratorio lab = laboratorioService.encontrarPorId(labId);
+        lab.getHorariosLigamento().clear();
+        return laboratorioMapper.toResponse(laboratorioRepository.save(lab));
+    }
 }
