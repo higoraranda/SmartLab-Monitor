@@ -104,7 +104,8 @@
                     </svg>
                 </button>
                 <div class="nav-sub" v-show="sections.politicas">
-                    <button class="nav-sub-item" :class="{ active: page === 'politicas-novo' || page === 'politicas-editar' }" @click="goTo('politicas-novo')">Cadastrar Política</button>
+                    <button class="nav-sub-item" :class="{ active: page === 'politicas-inatividade' }" @click="goTo('politicas-inatividade')">Tempo de Inatividade</button>
+                    <button class="nav-sub-item" :class="{ active: page === 'politicas-novo' || page === 'politicas-editar' }" @click="goTo('politicas-novo')">Cadastrar Política de Horário</button>
                     <button class="nav-sub-item" :class="{ active: page === 'politicas-lista' }" @click="goTo('politicas-lista')">Políticas Cadastradas</button>
                 </div>
             </div>
@@ -760,6 +761,54 @@
                 </div>
             </div>
 
+            <!-- ========== POLÍTICAS — TEMPO DE INATIVIDADE ========== -->
+            <div v-if="page === 'politicas-inatividade'">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">Tempo de Inatividade</h2>
+                        <p class="page-subtitle">Define após quantos segundos sem uso o computador é marcado como desligado</p>
+                    </div>
+                </div>
+
+                <div class="form-card">
+                    <div class="form-card-header form-card-header-purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>Selecionar Laboratório</span>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="form-label">Laboratório</label>
+                            <select v-model="inatividadeLabId" class="form-select" @change="carregarInatividade">
+                                <option disabled value="">Selecione um laboratório...</option>
+                                <option v-for="l in labs" :key="l.id" :value="l.id">{{ l.nome }} — {{ l.predioNome }}</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="inatividadeLabDados" class="form-card mt-1">
+                    <div class="form-card-header form-card-header-purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <span>Tempo atual: {{ inatividadeLabDados.tempoOciosoGlobal }}s</span>
+                    </div>
+                    <div class="form-body">
+                        <div class="form-group">
+                            <label class="form-label">Novo tempo limite (segundos, mínimo 10) <span class="required">*</span></label>
+                            <input v-model.number="inatividadeNovoTempo" type="number" min="10" class="form-input" placeholder="Ex: 300">
+                        </div>
+                        <div v-if="inatividadeErro" class="alert-error" style="margin-top:0.5rem">{{ inatividadeErro }}</div>
+                        <div v-if="inatividadeSucesso" class="alert-success" style="margin-top:0.5rem">{{ inatividadeSucesso }}</div>
+                        <div class="form-actions">
+                            <button class="btn-primary btn-purple" @click="salvarInatividade">Salvar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- ========== SIMULAR AGENTE ========== -->
             <div v-if="page === 'agente'">
                 <div class="page-header">
@@ -911,7 +960,14 @@ createApp({
             pcEdicao: null,
             pcForm: { patrimonio: '', laboratorioId: '' },
 
-            // POLÍTICAS
+            // INATIVIDADE
+            inatividadeLabId: '',
+            inatividadeLabDados: null,
+            inatividadeNovoTempo: 300,
+            inatividadeErro: '',
+            inatividadeSucesso: '',
+
+            // POLÍTICAS DE HORÁRIO
             politicas: [],
             politicaEdicao: null,
             politicaForm: { laboratorioId: '', horarioLigamento: '', horarioDesligamento: '' },
@@ -1138,7 +1194,27 @@ createApp({
             } catch(e) { this.pcErro = this.extrairErro(e); }
         },
 
-        // ========== POLÍTICAS ==========
+        // ========== INATIVIDADE ==========
+        async carregarInatividade() {
+            this.inatividadeErro = ''; this.inatividadeSucesso = '';
+            if (!this.inatividadeLabId) { this.inatividadeLabDados = null; return; }
+            try {
+                const res = await axios.get(`/laboratorios/${this.inatividadeLabId}`);
+                this.inatividadeLabDados = res.data;
+                this.inatividadeNovoTempo = res.data.tempoOciosoGlobal;
+            } catch(e) { this.inatividadeErro = this.extrairErro(e); }
+        },
+        async salvarInatividade() {
+            this.inatividadeErro = ''; this.inatividadeSucesso = '';
+            try {
+                const res = await axios.put(`/politicas/${this.inatividadeLabId}/inatividade`,
+                    { tempoOciosoGlobal: this.inatividadeNovoTempo });
+                this.inatividadeLabDados = res.data;
+                this.inatividadeSucesso = 'Tempo de inatividade atualizado com sucesso.';
+            } catch(e) { this.inatividadeErro = this.extrairErro(e); }
+        },
+
+        // ========== POLÍTICAS DE HORÁRIO ==========
         async carregarPoliticas() {
             try { this.politicas = (await axios.get('/politicas-horario')).data; }
             catch { this.politicaErro = 'Erro ao carregar políticas.'; }
