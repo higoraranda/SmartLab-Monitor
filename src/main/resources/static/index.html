@@ -1079,63 +1079,43 @@
                 <div class="page-header">
                     <div>
                         <h2 class="page-title">Histórico de Desligamentos</h2>
-                        <p class="page-subtitle">Consulte todos os desligamentos registrados pelo sistema</p>
+                        <p class="page-subtitle">Selecione um laboratório para ver os desligamentos registrados</p>
                     </div>
                 </div>
 
-                <!-- Filtros -->
+                <!-- Seletor de laboratório -->
                 <div class="form-card" style="margin-bottom:1.25rem">
                     <div class="form-card-header form-card-header-blue">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+                            <path d="M10 2v7.527a2 2 0 01-.211.896L4.72 20.55a1 1 0 00.9 1.45h12.76a1 1 0 00.9-1.45l-5.069-10.127A2 2 0 0114 9.527V2"/>
+                            <path d="M8.5 2h7"/><path d="M7 16h10"/>
                         </svg>
-                        <span>Filtros</span>
+                        <span>Selecionar Laboratório</span>
                     </div>
                     <div class="form-body">
-                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1rem">
-                            <div class="form-group">
-                                <label class="form-label">Motivo</label>
-                                <select v-model="historicoFiltros.motivo" class="form-select">
-                                    <option value="">Todos</option>
-                                    <option value="INATIVIDADE">Inatividade</option>
-                                    <option value="HORARIO_FIXO">Horário Fixo</option>
-                                    <option value="MANUAL">Manual</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Laboratório</label>
-                                <input v-model="historicoFiltros.laboratorio" type="text" class="form-input" placeholder="Nome do laboratório">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Patrimônio</label>
-                                <input v-model="historicoFiltros.patrimonio" type="text" class="form-input" placeholder="Código do patrimônio">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Data início</label>
-                                <input v-model="historicoFiltros.dataInicio" type="datetime-local" class="form-input">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Data fim</label>
-                                <input v-model="historicoFiltros.dataFim" type="datetime-local" class="form-input">
-                            </div>
+                        <div class="form-group">
+                            <label class="form-label">Laboratório</label>
+                            <select v-model="historicoLabNome" class="form-select">
+                                <option value="">Todos os laboratórios</option>
+                                <option v-for="l in labs" :key="l.id" :value="l.nome">{{ l.nome }} — {{ l.predioNome }}</option>
+                            </select>
                         </div>
-                        <div class="form-actions" style="margin-top:0.75rem">
-                            <button class="btn-outline" @click="historicoFiltros = { motivo: '', dataInicio: '', dataFim: '', laboratorio: '', patrimonio: '' }; carregarHistorico()">Limpar</button>
+                        <div class="form-actions" style="border-top:none;padding-top:0">
                             <button class="btn-primary btn-blue" @click="carregarHistorico">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                                 </svg>
-                                Buscar
+                                Ver Histórico
                             </button>
                         </div>
                     </div>
                 </div>
 
                 <p v-if="carregandoHistorico" class="loading-text">Carregando...</p>
-                <p v-else-if="historico.length === 0" class="empty-text">Nenhum registro encontrado com os filtros aplicados.</p>
-                <div v-else class="form-card">
+                <p v-else-if="historico.length === 0 && historicoConsultado" class="empty-text">Nenhum desligamento registrado para este laboratório.</p>
+                <div v-else-if="historico.length > 0" class="form-card">
                     <div style="padding:1rem 1.25rem;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--text-secondary)">
-                        {{ historico.length }} registro(s) encontrado(s)
+                        {{ historico.length }} registro(s) — {{ historicoLabNome || 'todos os laboratórios' }}
                     </div>
                     <div style="overflow-x:auto">
                         <table style="width:100%;border-collapse:collapse;font-size:0.875rem">
@@ -1274,7 +1254,8 @@ createApp({
             // HISTÓRICO
             historico: [],
             carregandoHistorico: false,
-            historicoFiltros: { motivo: '', dataInicio: '', dataFim: '', laboratorio: '', patrimonio: '' },
+            historicoLabNome: '',
+            historicoConsultado: false,
 
             // SIMULAÇÃO DE PRÉDIO COMPLETO
             simPredioId: '',
@@ -1347,7 +1328,7 @@ createApp({
             if (p.startsWith('pcs'))       this.sections.pcs      = true;
             if (p.startsWith('historico')) this.sections.historico = true;
             if (p === 'agente' || p === 'agente-predio') this.sections.agente = true;
-            if (p === 'historico-lista')   this.carregarHistorico();
+            if (p === 'historico-lista') { this.historico = []; this.historicoConsultado = false; }
 
             if (p === 'predios-novo') {
                 this.predioEdicao = null;
@@ -1839,15 +1820,13 @@ createApp({
 
         async carregarHistorico() {
             this.carregandoHistorico = true;
+            this.historicoConsultado = false;
             try {
                 const params = {};
-                if (this.historicoFiltros.motivo)      params.motivo     = this.historicoFiltros.motivo;
-                if (this.historicoFiltros.laboratorio) params.laboratorio = this.historicoFiltros.laboratorio;
-                if (this.historicoFiltros.patrimonio)  params.patrimonio  = this.historicoFiltros.patrimonio;
-                if (this.historicoFiltros.dataInicio)  params.dataInicio  = this.historicoFiltros.dataInicio + ':00';
-                if (this.historicoFiltros.dataFim)     params.dataFim     = this.historicoFiltros.dataFim     + ':00';
+                if (this.historicoLabNome) params.laboratorio = this.historicoLabNome;
                 const res = await axios.get('/historico-desligamento', { params });
                 this.historico = res.data;
+                this.historicoConsultado = true;
             } catch(e) {
                 console.error('Erro ao carregar histórico:', e);
             } finally {

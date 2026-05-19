@@ -7,7 +7,6 @@ import com.smartlab.monitor.repository.HistoricoDesligamentoRepository;
 import com.smartlab.monitor.service.HistoricoDesligamentoService;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -26,12 +25,13 @@ public class HistoricoDesligamentoServiceImpl implements HistoricoDesligamentoSe
     }
 
     @Override
-    public List<HistoricoDesligamentoResponse> buscarComFiltros(
-            MotivoDesligamento motivo, LocalDateTime dataInicio,
-            LocalDateTime dataFim, String laboratorio, String patrimonio) {
+    public List<HistoricoDesligamentoResponse> buscarPorLaboratorio(String laboratorioNome) {
+        List<HistoricoDesligamento> lista =
+                (laboratorioNome == null || laboratorioNome.isBlank())
+                        ? repository.findAllByOrderByDataHoraDesc()
+                        : repository.findByLaboratorioNomeIgnoreCaseOrderByDataHoraDesc(laboratorioNome);
 
-        return repository.buscarComFiltros(motivo, dataInicio, dataFim, laboratorio, patrimonio)
-                .stream()
+        return lista.stream()
                 .map(h -> new HistoricoDesligamentoResponse(
                         h.getId(), h.getPatrimonio(), h.getLaboratorioNome(),
                         h.getPredioNome(), h.getDataHora(), h.getMotivo()))

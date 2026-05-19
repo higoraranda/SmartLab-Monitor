@@ -11,12 +11,17 @@ import com.smartlab.monitor.repository.ComputadorRepository;
 import com.smartlab.monitor.service.ComputadorService;
 import com.smartlab.monitor.service.HistoricoDesligamentoService;
 import com.smartlab.monitor.service.LaboratorioService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class ComputadorServiceImpl implements ComputadorService {
+
+    private static final Logger log = LoggerFactory.getLogger(ComputadorServiceImpl.class);
 
     private final ComputadorRepository computadorRepository;
     private final LaboratorioService laboratorioService;
@@ -71,19 +76,28 @@ public class ComputadorServiceImpl implements ComputadorService {
     }
 
     @Override
+    @Transactional
     public ComputadorResponse atualizarStatus(Long id, StatusComputador status, MotivoDesligamento motivo) {
         Computador pc = encontrarPorId(id);
         pc.setStatus(status);
         Computador salvo = computadorRepository.save(pc);
+
         if (status == StatusComputador.DESLIGADO && motivo != null) {
-            Laboratorio lab = pc.getLaboratorio();
-            historicoService.registrar(
-                    pc.getPatrimonio(),
-                    lab.getNome(),
-                    lab.getPredio().getNome(),
-                    motivo
-            );
+            try {
+                Laboratorio lab = pc.getLaboratorio();
+                historicoService.registrar(
+                        pc.getPatrimonio(),
+                        lab.getNome(),
+                        lab.getPredio().getNome(),
+                        motivo
+                );
+                log.info("[Histórico] Registrado — PC: {} | Lab: {} | Motivo: {}",
+                        pc.getPatrimonio(), lab.getNome(), motivo);
+            } catch (Exception e) {
+                log.error("[Histórico] Falha ao registrar desligamento do PC {}: {}", id, e.getMessage(), e);
+            }
         }
+
         return computadorMapper.toResponse(salvo);
     }
 
