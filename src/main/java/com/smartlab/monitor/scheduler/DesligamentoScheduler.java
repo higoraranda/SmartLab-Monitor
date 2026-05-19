@@ -1,11 +1,9 @@
 package com.smartlab.monitor.scheduler;
 
-import com.smartlab.monitor.domain.Computador;
-import com.smartlab.monitor.domain.Laboratorio;
-import com.smartlab.monitor.domain.PoliticaHorario;
-import com.smartlab.monitor.domain.StatusComputador;
+import com.smartlab.monitor.domain.*;
 import com.smartlab.monitor.repository.ComputadorRepository;
 import com.smartlab.monitor.repository.PoliticaHorarioRepository;
+import com.smartlab.monitor.service.HistoricoDesligamentoService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,11 +23,14 @@ public class DesligamentoScheduler {
 
     private final PoliticaHorarioRepository politicaRepository;
     private final ComputadorRepository computadorRepository;
+    private final HistoricoDesligamentoService historicoService;
 
     public DesligamentoScheduler(PoliticaHorarioRepository politicaRepository,
-                                 ComputadorRepository computadorRepository) {
+                                 ComputadorRepository computadorRepository,
+                                 HistoricoDesligamentoService historicoService) {
         this.politicaRepository = politicaRepository;
         this.computadorRepository = computadorRepository;
+        this.historicoService = historicoService;
     }
 
     @Scheduled(cron = "0 * * * * *")
@@ -43,7 +44,15 @@ public class DesligamentoScheduler {
 
             if (ativos.isEmpty()) continue;
 
-            ativos.forEach(pc -> pc.setStatus(StatusComputador.DESLIGADO));
+            for (Computador pc : ativos) {
+                pc.setStatus(StatusComputador.DESLIGADO);
+                historicoService.registrar(
+                        pc.getPatrimonio(),
+                        lab.getNome(),
+                        lab.getPredio().getNome(),
+                        MotivoDesligamento.HORARIO_FIXO
+                );
+            }
             computadorRepository.saveAll(ativos);
 
             log.info("[Scheduler] {} — {} computador(es) desligado(s) às {} (política #{})",

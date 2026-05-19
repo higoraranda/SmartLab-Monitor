@@ -1,5 +1,6 @@
 package com.smartlab.monitor.service;
 
+import com.smartlab.monitor.domain.MotivoDesligamento;
 import com.smartlab.monitor.domain.StatusComputador;
 import com.smartlab.monitor.dto.ComputadorRequest;
 import com.smartlab.monitor.dto.ComputadorResponse;
@@ -11,6 +12,6 @@ public interface ComputadorService {
     List<ComputadorResponse> listarTodos();
     ComputadorResponse buscarPorId(Long id);
     ComputadorResponse atualizar(Long id, ComputadorRequest request);
-    ComputadorResponse atualizarStatus(Long id, StatusComputador status);
+    ComputadorResponse atualizarStatus(Long id, StatusComputador status, MotivoDesligamento motivo);
     void remover(Long id);
 }

@@ -51,7 +51,7 @@ public class ComputadorController {
     @PutMapping("/{id}/status")
     @Operation(summary = "Atualiza o status do computador (LIGADO, INATIVO, DESLIGADO)")
     public ComputadorResponse atualizarStatus(@PathVariable Long id, @Valid @RequestBody StatusRequest request) {
-        return computadorService.atualizarStatus(id, request.status());
+        return computadorService.atualizarStatus(id, request.status(), request.motivo());
     }
 
     @DeleteMapping("/{id}")

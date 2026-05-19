@@ -2,12 +2,14 @@ package com.smartlab.monitor.service.impl;
 
 import com.smartlab.monitor.domain.Computador;
 import com.smartlab.monitor.domain.Laboratorio;
+import com.smartlab.monitor.domain.MotivoDesligamento;
 import com.smartlab.monitor.domain.StatusComputador;
 import com.smartlab.monitor.dto.ComputadorRequest;
 import com.smartlab.monitor.dto.ComputadorResponse;
 import com.smartlab.monitor.mapper.ComputadorMapper;
 import com.smartlab.monitor.repository.ComputadorRepository;
 import com.smartlab.monitor.service.ComputadorService;
+import com.smartlab.monitor.service.HistoricoDesligamentoService;
 import com.smartlab.monitor.service.LaboratorioService;
 import org.springframework.stereotype.Service;
 
@@ -19,13 +21,16 @@ public class ComputadorServiceImpl implements ComputadorService {
     private final ComputadorRepository computadorRepository;
     private final LaboratorioService laboratorioService;
     private final ComputadorMapper computadorMapper;
+    private final HistoricoDesligamentoService historicoService;
 
     public ComputadorServiceImpl(ComputadorRepository computadorRepository,
                                  LaboratorioService laboratorioService,
-                                 ComputadorMapper computadorMapper) {
+                                 ComputadorMapper computadorMapper,
+                                 HistoricoDesligamentoService historicoService) {
         this.computadorRepository = computadorRepository;
         this.laboratorioService   = laboratorioService;
         this.computadorMapper     = computadorMapper;
+        this.historicoService     = historicoService;
     }
 
     @Override
@@ -66,10 +71,20 @@ public class ComputadorServiceImpl implements ComputadorService {
     }
 
     @Override
-    public ComputadorResponse atualizarStatus(Long id, StatusComputador status) {
+    public ComputadorResponse atualizarStatus(Long id, StatusComputador status, MotivoDesligamento motivo) {
         Computador pc = encontrarPorId(id);
         pc.setStatus(status);
-        return computadorMapper.toResponse(computadorRepository.save(pc));
+        Computador salvo = computadorRepository.save(pc);
+        if (status == StatusComputador.DESLIGADO && motivo != null) {
+            Laboratorio lab = pc.getLaboratorio();
+            historicoService.registrar(
+                    pc.getPatrimonio(),
+                    lab.getNome(),
+                    lab.getPredio().getNome(),
+                    motivo
+            );
+        }
+        return computadorMapper.toResponse(salvo);
     }
 
     @Override
